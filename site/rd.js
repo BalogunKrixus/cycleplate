@@ -35,8 +35,8 @@ Every submission is posted to a provider endpoint. Paste the endpoints into
 ENDPOINTS below and redeploy; while one is blank that form tells the visitor
 to email us instead, because reporting a success we cannot deliver is how
 signups got silently dropped before. */
-const ENDPOINTS={newsletter:"/api/subscribe",community:"/api/subscribe",partner:""};
-const CONTACT={newsletter:"hellocycleplate@gmail.com",community:"hellocycleplate@gmail.com",partner:"info@hellocycleplate.com"};
+const ENDPOINTS={newsletter:"/api/subscribe",community:"/api/subscribe",partner:"/api/subscribe"};
+const CONTACT={newsletter:"hellocycleplate@gmail.com",community:"hellocycleplate@gmail.com",partner:"hellocycleplate@gmail.com"};
 const DONE={
 newsletter:"Thank you. You are on the list. Science backed cycle nutrition, straight to your inbox.",
 community:"Welcome in. You are on the list, and we will email you as your circles open up.",
