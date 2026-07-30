@@ -26,31 +26,61 @@ if(window.CyclePlate)CyclePlate.hydrate();
 setIcon();
 document.getElementById("themeToggle")?.addEventListener("click",()=>{const d=document.documentElement.dataset.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=d;localStorage.setItem("cpTheme",d);setIcon();});
 document.getElementById("navBurger")?.addEventListener("click",()=>document.getElementById("navLinks").classList.toggle("open"));
-// waitlist forms
-document.querySelectorAll("form.cp-waitlist").forEach(f=>{f.addEventListener("submit",e=>{e.preventDefault();
-const email=f.querySelector('input[type="email"]').value.trim();
-const name=f.querySelector('input[name="first_name"]')?.value.trim()||"";
-const msg=f.parentElement.querySelector(".form-msg");
-if(!email||!/.+@.+\..+/.test(email)){msg.className="form-msg err";msg.textContent="Something went wrong. Please try again or email hellocycleplate@gmail.com.";return;}
-console.log("Waitlist signup:",{email,first_name:name});
-msg.className="form-msg ok";msg.textContent="Thank you. You are on the list. Science backed cycle nutrition, straight to your inbox.";f.reset();});});
-// community join form
-const cf=document.getElementById("communityForm");
-if(cf)cf.addEventListener("submit",e=>{e.preventDefault();
-const email=cf.querySelector('input[type="email"]').value.trim();
-const msg=cf.parentElement.querySelector(".form-msg");
-if(!email||!/.+@.+\..+/.test(email)){msg.className="form-msg err";msg.textContent="Something went wrong. Please check your email address and try again.";return;}
-console.log("Community signup:",Object.fromEntries(new FormData(cf).entries()));
-msg.className="form-msg ok";msg.textContent="Welcome in. Check your inbox to confirm your email and choose the circles you want to join.";cf.reset();});
-// partner form
-const pf=document.getElementById("partnerForm");
-if(pf)pf.addEventListener("submit",e=>{e.preventDefault();
-const data=Object.fromEntries(new FormData(pf).entries());
-data.partnership_interest=[...pf.querySelectorAll('input[name="interest"]:checked')].map(i=>i.value);
-const msg=pf.parentElement.querySelector(".form-msg");
-if(!data.org_name||!data.email||!/.+@.+\..+/.test(data.email)){msg.className="form-msg err";msg.textContent="Something went wrong. Please check the required fields and try again, or email info@hellocycleplate.com.";return;}
-console.log("Partner enquiry:",data);
-msg.className="form-msg ok";msg.textContent="Thank you. We will respond within two business days.";pf.reset();});
+/* forms -------------------------------------------------------------------
+Every submission is posted to a provider endpoint. Paste the endpoints into
+ENDPOINTS below and redeploy; while one is blank that form tells the visitor
+to email us instead, because reporting a success we cannot deliver is how
+signups got silently dropped before. */
+const ENDPOINTS={newsletter:"",community:"",partner:""};
+const CONTACT={newsletter:"hellocycleplate@gmail.com",community:"hellocycleplate@gmail.com",partner:"info@hellocycleplate.com"};
+const DONE={
+newsletter:"Thank you. You are on the list. Science backed cycle nutrition, straight to your inbox.",
+community:"Welcome in. Check your inbox to confirm your email and choose the circles you want to join.",
+partner:"Thank you. We will respond within two business days."};
+const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+function setMsg(el,kind,text){el.className="form-msg"+(kind?" "+kind:"");el.textContent=text;}
+// FormData keeps only the last value for repeated names, so fold checkbox groups by hand
+function readFields(form){
+const data=Object.fromEntries(new FormData(form).entries());
+const groups={};
+form.querySelectorAll('input[type="checkbox"][name]:checked').forEach(i=>{(groups[i.name]??=[]).push(i.value);});
+Object.entries(groups).forEach(([k,v])=>{data[k]=v.join(", ");});
+return data;}
+async function deliver(kind,data){
+const url=ENDPOINTS[kind];
+if(!url)throw new Error("unconfigured");
+const res=await fetch(url,{method:"POST",headers:{Accept:"application/json"},body:new URLSearchParams(data)});
+if(!res.ok)throw new Error("http "+res.status);}
+function wireForm(form,kind,validate){
+if(!form)return;
+const msg=form.parentElement.querySelector(".form-msg");
+const btn=form.querySelector('button[type="submit"]');
+const label=btn?btn.textContent:"";
+let busy=false;
+form.addEventListener("submit",async e=>{
+e.preventDefault();
+if(busy)return;
+const data=readFields(form);
+if(data.company)return;// honeypot: off-screen field only a bot fills in
+const problem=validate(data);
+if(problem){setMsg(msg,"err",problem);return;}
+busy=true;setMsg(msg,"","");
+if(btn){btn.disabled=true;btn.textContent="Sending…";}
+try{
+await deliver(kind,data);
+setMsg(msg,"ok",DONE[kind]);
+form.reset();
+}catch(err){
+setMsg(msg,"err",err.message==="unconfigured"
+?"Sign ups are not connected yet. Please email "+CONTACT[kind]+" and we will add you by hand."
+:"That did not go through. Please try again, or email "+CONTACT[kind]+".");
+}finally{
+busy=false;if(btn){btn.disabled=false;btn.textContent=label;}
+}});}
+const needsEmail=d=>!d.email||!EMAIL_RE.test(d.email)?"Please enter a valid email address.":"";
+document.querySelectorAll("form.cp-waitlist").forEach(f=>wireForm(f,"newsletter",needsEmail));
+wireForm(document.getElementById("communityForm"),"community",d=>!d.display_name?"Please choose a display name.":needsEmail(d));
+wireForm(document.getElementById("partnerForm"),"partner",d=>!d.org_name?"Please tell us your organisation name.":!d.contact_name?"Please tell us your name.":needsEmail(d));
 // reveal on scroll
 const io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){en.target.classList.add("in");en.target.querySelectorAll?.(".bar-fill").forEach(b=>{if(b.dataset.w)b.style.width=b.dataset.w;});if(en.target.dataset&&en.target.dataset.p)en.target.style.setProperty("--p",en.target.dataset.p);io.unobserve(en.target);}}),{threshold:.12});
 document.querySelectorAll(".rv").forEach(el=>io.observe(el));
