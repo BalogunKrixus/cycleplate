@@ -31,7 +31,7 @@ Every submission is posted to a provider endpoint. Paste the endpoints into
 ENDPOINTS below and redeploy; while one is blank that form tells the visitor
 to email us instead, because reporting a success we cannot deliver is how
 signups got silently dropped before. */
-const ENDPOINTS={newsletter:"",community:"",partner:""};
+const ENDPOINTS={newsletter:"/api/subscribe",community:"/api/subscribe",partner:""};
 const CONTACT={newsletter:"hellocycleplate@gmail.com",community:"hellocycleplate@gmail.com",partner:"info@hellocycleplate.com"};
 const DONE={
 newsletter:"Thank you. You are on the list. Science backed cycle nutrition, straight to your inbox.",
@@ -49,8 +49,11 @@ return data;}
 async function deliver(kind,data){
 const url=ENDPOINTS[kind];
 if(!url)throw new Error("unconfigured");
-const res=await fetch(url,{method:"POST",headers:{Accept:"application/json"},body:new URLSearchParams(data)});
-if(!res.ok)throw new Error("http "+res.status);}
+const res=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({form:kind,...data})});
+if(res.ok)return;
+let reason="";
+try{reason=(await res.json()).error||"";}catch{}
+throw new Error(reason||"http "+res.status);}
 function wireForm(form,kind,validate){
 if(!form)return;
 const msg=form.parentElement.querySelector(".form-msg");
@@ -71,9 +74,12 @@ await deliver(kind,data);
 setMsg(msg,"ok",DONE[kind]);
 form.reset();
 }catch(err){
-setMsg(msg,"err",err.message==="unconfigured"
-?"Sign ups are not connected yet. Please email "+CONTACT[kind]+" and we will add you by hand."
-:"That did not go through. Please try again, or email "+CONTACT[kind]+".");
+const why=err.message;
+setMsg(msg,"err",
+why==="already"?"You are already on the list.":
+why==="invalid email"?"Please enter a valid email address.":
+why==="unconfigured"?"Sign ups are not connected yet. Please email "+CONTACT[kind]+" and we will add you by hand.":
+"That did not go through. Please try again, or email "+CONTACT[kind]+".");
 }finally{
 busy=false;if(btn){btn.disabled=false;btn.textContent=label;}
 }});}
