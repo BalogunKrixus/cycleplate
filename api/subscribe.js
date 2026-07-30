@@ -28,6 +28,34 @@ function createSubscriber(key, payload) {
   });
 }
 
+/* Two things vary between accounts, and neither is worth failing a sign up over:
+   Buttondown renamed the email field between API revisions, and tags (and
+   possibly metadata) need a paid plan, which a free account rejects outright.
+   Try the richest shape first and drop whatever the account cannot take, so a
+   free plan still subscribes people and a paid one keeps the tags. */
+async function subscribe(key, email, tags, metadata) {
+  const shapes = [{ tags, metadata }, { metadata }, {}];
+  let field = "email_address";
+
+  for (const extra of shapes) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const r = await createSubscriber(key, { [field]: email, ...extra });
+      if (r.ok) return { ok: true };
+
+      const detail = await r.text().catch(() => "");
+      if (/already/i.test(detail)) return { ok: false, already: true };
+
+      if (r.status === 400 && field === "email_address" && attempt === 0) {
+        field = "email"; // older revisions of the API name it this way
+        continue;
+      }
+      if (/feature_disabled/.test(detail)) break; // drop a feature, try again
+      return { ok: false, status: r.status, detail };
+    }
+  }
+  return { ok: false, status: 0, detail: "no accepted payload shape" };
+}
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -48,23 +76,17 @@ module.exports = async (req, res) => {
   const tags = [tag];
   if (body.circle) tags.push(...body.circle.split(",").map(s => s.trim()).filter(Boolean));
 
-  const metadata = {};
+  const metadata = { source: tag };
   if (body.first_name) metadata.first_name = body.first_name;
   if (body.display_name) metadata.display_name = body.display_name;
+  // also carried as metadata so the circles survive on plans without tags
+  if (body.circle) metadata.circles = body.circle;
 
-  let r = await createSubscriber(key, { email_address: email, tags, metadata });
-  let detail = r.ok ? "" : await r.text().catch(() => "");
+  const result = await subscribe(key, email, tags, metadata);
 
-  // Buttondown renamed this field between API revisions; fall back so the
-  // account works on either. An "already subscribed" 400 is not a rename.
-  if (!r.ok && r.status === 400 && !/already/i.test(detail)) {
-    r = await createSubscriber(key, { email, tags, metadata });
-    detail = r.ok ? "" : await r.text().catch(() => "");
-  }
+  if (result.ok) return res.status(200).json({ ok: true });
+  if (result.already) return res.status(409).json({ error: "already" });
 
-  if (r.ok) return res.status(200).json({ ok: true });
-  if (/already/i.test(detail)) return res.status(409).json({ error: "already" });
-
-  console.error("buttondown %d: %s", r.status, detail.slice(0, 300));
+  console.error("buttondown %d: %s", result.status, String(result.detail).slice(0, 300));
   return res.status(502).json({ error: "upstream" });
 };
