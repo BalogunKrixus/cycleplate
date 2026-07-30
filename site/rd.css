@@ -68,6 +68,9 @@ textarea{resize:vertical;min-height:120px}
 .checks{display:flex;flex-wrap:wrap;gap:10px}
 .checks label{display:inline-flex;align-items:center;gap:8px;background:var(--card);box-shadow:var(--sh);border-radius:999px;padding:9px 16px;font-size:14px;cursor:pointer;user-select:none}
 .checks input{accent-color:var(--accent)}
+/* honeypot: kept out of sight and out of the tab order, bots fill it anyway.
+   Matches input[type="text"] specificity so the shared input width is overridden. */
+input.hp{position:absolute;left:-9999px;width:1px;height:1px;padding:0;box-shadow:none;overflow:hidden}
 /* imagery */
 .photo{border-radius:22px;overflow:hidden;box-shadow:var(--sh-lg)}
 .photo img{width:100%;height:100%;object-fit:cover}
