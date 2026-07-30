@@ -1,15 +1,20 @@
-/* Newsletter and community sign ups.
+/* Form submissions: newsletter, community and partner.
 
-   The browser posts here rather than straight to Buttondown: the embed
-   endpoint is built for form navigation and does not answer cross-origin
-   fetches, so calling it from JavaScript would report a failure for a
-   subscription that actually succeeded. Proxying also keeps the API key on
-   the server, where it belongs.
+   The browser posts here rather than straight to a provider: Buttondown's
+   embed endpoint is built for form navigation and does not answer
+   cross-origin fetches, and neither destination can be called with a
+   credential from the browser without exposing it.
 
-   Set BUTTONDOWN_API_KEY in the Vercel project's environment variables. */
+   Destinations, and which one a form cannot do without:
+
+     newsletter  Buttondown (required), spreadsheet (best effort)
+     community   spreadsheet (required), Buttondown (best effort)
+     partner     spreadsheet (required) — the script also emails the enquiry
+
+   Environment: BUTTONDOWN_API_KEY, SHEET_WEBHOOK_URL. */
 
 const SUBSCRIBERS = "https://api.buttondown.com/v1/subscribers";
-const TAGS = { newsletter: "newsletter", community: "community" };
+const FORMS = { newsletter: "newsletter", community: "community", partner: "partner" };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function readBody(req) {
@@ -56,37 +61,85 @@ async function subscribe(key, email, tags, metadata) {
   return { ok: false, status: 0, detail: "no accepted payload shape" };
 }
 
+/* Apps Script web app: appends a row and emails partner enquiries. It answers
+   with a redirect to googleusercontent.com, which fetch follows for us. */
+async function appendRow(url, row) {
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(row),
+  });
+  if (!r.ok) {
+    const detail = await r.text().catch(() => "");
+    throw Object.assign(new Error("sheet"), { status: r.status, detail });
+  }
+}
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "method not allowed" });
   }
 
-  const key = process.env.BUTTONDOWN_API_KEY;
-  if (!key) return res.status(503).json({ error: "unconfigured" });
-
   const body = readBody(req);
-  const tag = TAGS[body.form];
-  if (!tag) return res.status(400).json({ error: "unknown form" });
+  const form = FORMS[body.form];
+  if (!form) return res.status(400).json({ error: "unknown form" });
   if (body.company) return res.status(200).json({ ok: true }); // honeypot: accept, then drop
 
   const email = String(body.email || "").trim();
   if (!EMAIL_RE.test(email)) return res.status(400).json({ error: "invalid email" });
 
-  const tags = [tag];
+  // the browser checks these too, but a POST does not have to come from the page
+  if (form === "community" && !body.display_name) return res.status(400).json({ error: "missing display name" });
+  if (form === "partner" && !body.org_name) return res.status(400).json({ error: "missing organisation" });
+
+  const key = process.env.BUTTONDOWN_API_KEY;
+  const sheetUrl = process.env.SHEET_WEBHOOK_URL;
+
+  const tags = [form];
   if (body.circle) tags.push(...body.circle.split(",").map(s => s.trim()).filter(Boolean));
 
-  const metadata = { source: tag };
+  const metadata = { source: form };
   if (body.first_name) metadata.first_name = body.first_name;
   if (body.display_name) metadata.display_name = body.display_name;
   // also carried as metadata so the circles survive on plans without tags
   if (body.circle) metadata.circles = body.circle;
 
-  const result = await subscribe(key, email, tags, metadata);
+  const { form: _f, company: _c, ...fields } = body;
+  const row = { form, submitted_at: new Date().toISOString(), ...fields };
 
-  if (result.ok) return res.status(200).json({ ok: true });
-  if (result.already) return res.status(409).json({ error: "already" });
+  const wantsSheet = form === "community" || form === "partner";
 
-  console.error("buttondown %d: %s", result.status, String(result.detail).slice(0, 300));
-  return res.status(502).json({ error: "upstream" });
+  try {
+    if (wantsSheet) {
+      if (!sheetUrl) return res.status(503).json({ error: "unconfigured" });
+      await appendRow(sheetUrl, row); // required: this is the record of the submission
+    } else {
+      if (!key) return res.status(503).json({ error: "unconfigured" });
+      const r = await subscribe(key, email, tags, metadata);
+      if (r.already) return res.status(409).json({ error: "already" });
+      if (!r.ok) {
+        console.error("buttondown %d: %s", r.status, String(r.detail).slice(0, 300));
+        return res.status(502).json({ error: "upstream" });
+      }
+    }
+  } catch (err) {
+    console.error("sheet %d: %s", err.status || 0, String(err.detail || err.message).slice(0, 300));
+    return res.status(502).json({ error: "upstream" });
+  }
+
+  /* Secondary destination. A failure here is logged but not surfaced: the
+     submission is already recorded, so telling the visitor it failed would be
+     the same lie in reverse. */
+  try {
+    if (form === "newsletter" && sheetUrl) await appendRow(sheetUrl, row);
+    if (form === "community" && key) {
+      const r = await subscribe(key, email, tags, metadata);
+      if (!r.ok && !r.already) console.error("buttondown (secondary) %d: %s", r.status, String(r.detail).slice(0, 200));
+    }
+  } catch (err) {
+    console.error("secondary destination failed: %s", String(err.detail || err.message).slice(0, 200));
+  }
+
+  return res.status(200).json({ ok: true });
 };

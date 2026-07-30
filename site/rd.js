@@ -7,15 +7,19 @@ const links=PAGES.map(([t,h,k])=>`<a href="${h}"${k===active?' class="active"':'
 const wl=document.getElementById("waitlist")?"#waitlist":HOME+"#waitlist";
 return `<div class="nav-in"><a class="nav-logo" href="${HOME}" aria-label="CyclePlate home"><span data-cp="lockup" data-mark-size="34" data-word-size="22"></span></a><nav class="nav-links" id="navLinks">${links}</nav><div class="nav-cta"><button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark mode"><svg id="tIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></svg></button><a href="community.html#join" class="btn btn-primary">Join the community</a><button class="nav-burger" id="navBurger" aria-label="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div></div>`;}
 function footHTML(){
-const ic={instagram:'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/>',tiktok:'<path d="M14 4v9.5a3.75 3.75 0 1 1-3.75-3.75M14 4c.4 2.4 2 4.2 4.5 4.5"/>',x:'<path d="M4 4l16 16M20 4L4 20"/>',linkedin:'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 10.5V17M8 7.2v.1M12 17v-4a2.2 2.2 0 0 1 4.4 0v4"/>'};
-const soc=Object.entries(ic).map(([k,p])=>`<a href="#" aria-label="${k}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${p}</svg></a>`).join("");
+const SOCIAL=[
+["Instagram","https://www.instagram.com/hellocycleplate/",'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/>'],
+["TikTok","https://www.tiktok.com/@cycleplate",'<path d="M14 4v9.5a3.75 3.75 0 1 1-3.75-3.75M14 4c.4 2.4 2 4.2 4.5 4.5"/>'],
+["X","https://x.com/cycleplate",'<path d="M4 4l16 16M20 4L4 20"/>'],
+["LinkedIn","https://www.linkedin.com/company/cycleplate/about/",'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 10.5V17M8 7.2v.1M12 17v-4a2.2 2.2 0 0 1 4.4 0v4"/>']];
+const soc=SOCIAL.map(([name,href,p])=>`<a href="${href}" target="_blank" rel="noopener noreferrer" aria-label="CyclePlate on ${name}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${p}</svg></a>`).join("");
 const wl=document.getElementById("waitlist")?"#waitlist":HOME+"#waitlist";
 return `<div class="wrap"><div class="foot-grid">
 <div><span data-cp="lockup" data-mark-size="30" data-word-size="20"></span><p class="muted small" style="margin-top:14px;max-width:26ch">Cycle aligned nutrition and community for women, grounded in published research.</p><div class="foot-social">${soc}</div></div>
 <div><h4>Explore</h4><ul><li><a href="science.html">The science</a></li><li><a href="community.html">Community</a></li><li><a href="journal.html">Journal</a></li></ul></div>
 <div><h4>Company</h4><ul><li><a href="about.html">About</a></li><li><a href="about.html">Our mission</a></li><li><a href="partners.html">Partners</a></li><li><a href="${wl}">Newsletter</a></li></ul></div>
 <div><h4>Stay in touch</h4><ul><li><a href="mailto:hellocycleplate@gmail.com">hellocycleplate@gmail.com</a></li><li><a href="mailto:info@hellocycleplate.com">info@hellocycleplate.com</a></li><li><a href="${wl}">Join the waitlist</a></li></ul></div>
-</div><div class="foot-legal"><span class="mono">© 2026 CyclePlate</span><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><span>CyclePlate is a nutrition wellness tool. It is not medical advice, diagnosis, or treatment.</span></div></div>`;}
+</div><div class="foot-legal"><span class="mono">© 2026 CyclePlate</span><a href="privacy.html">Privacy Policy</a><a href="terms.html">Terms of Service</a><span>CyclePlate is a nutrition wellness tool. It is not medical advice, diagnosis, or treatment.</span></div></div>`;}
 const SUN='<circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/>';
 const MOON='<path d="M20 13.5A8 8 0 0 1 10.5 4 8 8 0 1 0 20 13.5z"/>';
 function setIcon(){const el=document.getElementById("tIcon");if(el)el.innerHTML=document.documentElement.dataset.theme==="dark"?SUN:MOON;}
@@ -35,7 +39,7 @@ const ENDPOINTS={newsletter:"/api/subscribe",community:"/api/subscribe",partner:
 const CONTACT={newsletter:"hellocycleplate@gmail.com",community:"hellocycleplate@gmail.com",partner:"info@hellocycleplate.com"};
 const DONE={
 newsletter:"Thank you. You are on the list. Science backed cycle nutrition, straight to your inbox.",
-community:"Welcome in. Check your inbox to confirm your email and choose the circles you want to join.",
+community:"Welcome in. You are on the list, and we will email you as your circles open up.",
 partner:"Thank you. We will respond within two business days."};
 const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 function setMsg(el,kind,text){el.className="form-msg"+(kind?" "+kind:"");el.textContent=text;}
