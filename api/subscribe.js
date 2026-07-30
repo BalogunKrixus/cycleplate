@@ -108,37 +108,42 @@ module.exports = async (req, res) => {
   const { form: _f, company: _c, ...fields } = body;
   const row = { form, submitted_at: new Date().toISOString(), ...fields };
 
-  const wantsSheet = form === "community" || form === "partner";
+  /* Which destination has to succeed for the submission to count, and which is
+     a bonus. A partner enquiry has nowhere else to go. A community sign up
+     prefers the spreadsheet but falls back to Buttondown while no spreadsheet
+     is configured, so the form keeps working either way. */
+  const sheet = sheetUrl ? "sheet" : null;
+  const buttondown = key ? "buttondown" : null;
+  const [primary, secondary] =
+    form === "partner" ? [sheet, null] :
+    form === "community" ? (sheet ? [sheet, buttondown] : [buttondown, null]) :
+    [buttondown, sheet];
+
+  if (!primary) return res.status(503).json({ error: "unconfigured" });
+
+  const send = async (dest) => {
+    if (dest === "sheet") return appendRow(sheetUrl, row);
+    const r = await subscribe(key, email, tags, metadata);
+    if (!r.ok) throw Object.assign(new Error("buttondown"), r);
+  };
 
   try {
-    if (wantsSheet) {
-      if (!sheetUrl) return res.status(503).json({ error: "unconfigured" });
-      await appendRow(sheetUrl, row); // required: this is the record of the submission
-    } else {
-      if (!key) return res.status(503).json({ error: "unconfigured" });
-      const r = await subscribe(key, email, tags, metadata);
-      if (r.already) return res.status(409).json({ error: "already" });
-      if (!r.ok) {
-        console.error("buttondown %d: %s", r.status, String(r.detail).slice(0, 300));
-        return res.status(502).json({ error: "upstream" });
-      }
-    }
+    await send(primary);
   } catch (err) {
-    console.error("sheet %d: %s", err.status || 0, String(err.detail || err.message).slice(0, 300));
+    if (err.already) return res.status(409).json({ error: "already" });
+    console.error("%s %d: %s", primary, err.status || 0, String(err.detail || err.message).slice(0, 300));
     return res.status(502).json({ error: "upstream" });
   }
 
-  /* Secondary destination. A failure here is logged but not surfaced: the
-     submission is already recorded, so telling the visitor it failed would be
-     the same lie in reverse. */
-  try {
-    if (form === "newsletter" && sheetUrl) await appendRow(sheetUrl, row);
-    if (form === "community" && key) {
-      const r = await subscribe(key, email, tags, metadata);
-      if (!r.ok && !r.already) console.error("buttondown (secondary) %d: %s", r.status, String(r.detail).slice(0, 200));
+  /* A failure here is logged but not surfaced: the submission is already
+     recorded, so telling the visitor it failed would be the same lie in
+     reverse. Being already subscribed is not a failure worth logging. */
+  if (secondary) {
+    try {
+      await send(secondary);
+    } catch (err) {
+      if (!err.already) console.error("%s (secondary) %d: %s", secondary, err.status || 0, String(err.detail || err.message).slice(0, 200));
     }
-  } catch (err) {
-    console.error("secondary destination failed: %s", String(err.detail || err.message).slice(0, 200));
   }
 
   return res.status(200).json({ ok: true });
