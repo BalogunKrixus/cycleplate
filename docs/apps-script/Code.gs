@@ -21,6 +21,13 @@ var COLUMNS = {
   partner: ['submitted_at', 'email', 'org_name', 'contact_name', 'org_type', 'interest', 'message']
 };
 
+/* Health check. Open the /exec URL in a private window: reaching this proves
+   the deployment is callable without a Google session, which is what Vercel
+   needs. A sign-in page instead means "Who has access" is not "Anyone". */
+function doGet() {
+  return json({ ok: true, service: 'cycleplate-forms' });
+}
+
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);

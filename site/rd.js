@@ -68,7 +68,8 @@ form.addEventListener("submit",async e=>{
 e.preventDefault();
 if(busy)return;
 const data=readFields(form);
-if(data.company)return;// honeypot: off-screen field only a bot fills in
+if(data.cp_hp)return;// honeypot: off-screen field only a bot fills in. Deliberately not
+// named after anything autofill recognises, or a browser fills it for a real person
 const problem=validate(data);
 if(problem){setMsg(msg,"err",problem);return;}
 busy=true;setMsg(msg,"","");
