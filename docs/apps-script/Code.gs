@@ -21,11 +21,19 @@ var COLUMNS = {
   partner: ['submitted_at', 'email', 'org_name', 'contact_name', 'org_type', 'interest', 'message']
 };
 
-/* Health check. Open the /exec URL in a private window: reaching this proves
-   the deployment is callable without a Google session, which is what Vercel
-   needs. A sign-in page instead means "Who has access" is not "Anyone". */
+/* Health check, answering the two things that go wrong. Open the /exec URL in
+   a private window: reaching this at all proves the deployment is callable
+   without a Google session, and "sheet" names the spreadsheet the script is
+   bound to. A sign-in page means "Who has access" is not "Anyone"; a null
+   sheet means the project is standalone rather than created from inside a
+   spreadsheet, and no row can ever be written. */
 function doGet() {
-  return json({ ok: true, service: 'cycleplate-forms' });
+  var book = SpreadsheetApp.getActiveSpreadsheet();
+  return json({
+    ok: true,
+    service: 'cycleplate-forms',
+    sheet: book ? book.getName() : null
+  });
 }
 
 function doPost(e) {
