@@ -84,7 +84,7 @@ module.exports = async (req, res) => {
   const body = readBody(req);
   const form = FORMS[body.form];
   if (!form) return res.status(400).json({ error: "unknown form" });
-  if (body.company) return res.status(200).json({ ok: true }); // honeypot: accept, then drop
+  if (body.cp_hp) return res.status(200).json({ ok: true }); // honeypot: accept, then drop
 
   const email = String(body.email || "").trim();
   if (!EMAIL_RE.test(email)) return res.status(400).json({ error: "invalid email" });
@@ -105,7 +105,7 @@ module.exports = async (req, res) => {
   // also carried as metadata so the circles survive on plans without tags
   if (body.circle) metadata.circles = body.circle;
 
-  const { form: _f, company: _c, ...fields } = body;
+  const { form: _f, cp_hp: _h, ...fields } = body;
   const row = { form, submitted_at: new Date().toISOString(), ...fields };
 
   /* Which destination has to succeed for the submission to count, and which is
