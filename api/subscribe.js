@@ -90,11 +90,20 @@ async function checkSheet(sheetUrl) {
     const body = await r.text().catch(() => "");
     out.status = r.status;
     out.finalHost = hostOf(r.url);
-    out.reachedScript = /"ok"\s*:\s*true/.test(body);
     out.looksLikeSignIn = /accounts\.google\.com|ServiceLogin|Sign in to continue/i.test(body);
-    out.hint = out.reachedScript ? "script is reachable anonymously"
-      : out.looksLikeSignIn || out.status === 401 ? 'deployment is not shared with "Anyone"'
-      : "reached Google but not the script; check the deployment is current";
+
+    let answer = null;
+    try { answer = JSON.parse(body); } catch {}
+    out.reachedScript = !!(answer && answer.ok === true);
+    if (out.reachedScript) out.boundSheet = answer.sheet || null;
+
+    out.hint = !out.reachedScript
+      ? (out.looksLikeSignIn || out.status === 401
+        ? 'deployment is not shared with "Anyone"'
+        : "reached Google but not the script; check the deployment is current")
+      : out.boundSheet
+        ? "ready: reachable and bound to " + out.boundSheet
+        : "reachable, but the script is standalone rather than bound to a spreadsheet, so no row can be written";
   } catch (err) {
     out.error = String(err.message).slice(0, 140);
   }
