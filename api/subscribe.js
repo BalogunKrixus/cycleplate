@@ -71,11 +71,44 @@ async function appendRow(url, row) {
   });
   if (!r.ok) {
     const detail = await r.text().catch(() => "");
-    throw Object.assign(new Error("sheet"), { status: r.status, detail });
+    throw Object.assign(new Error("sheet"), { status: r.status, host: hostOf(r.url), detail });
   }
 }
 
+function hostOf(u) {
+  try { return new URL(u).host; } catch { return null; }
+}
+
+/* GET /api/subscribe?check=1 — reports whether the spreadsheet webhook answers
+   without a Google session, which is the part that tends to be misconfigured.
+   Reports the host it ended up at and never the URL, which is a secret. */
+async function checkSheet(sheetUrl) {
+  if (!sheetUrl) return { configured: false, hint: "SHEET_WEBHOOK_URL is not set" };
+  const out = { configured: true, endsWithExec: /\/exec$/.test(sheetUrl.trim()) };
+  try {
+    const r = await fetch(sheetUrl, { method: "GET" });
+    const body = await r.text().catch(() => "");
+    out.status = r.status;
+    out.finalHost = hostOf(r.url);
+    out.reachedScript = /"ok"\s*:\s*true/.test(body);
+    out.looksLikeSignIn = /accounts\.google\.com|ServiceLogin|Sign in to continue/i.test(body);
+    out.hint = out.reachedScript ? "script is reachable anonymously"
+      : out.looksLikeSignIn || out.status === 401 ? 'deployment is not shared with "Anyone"'
+      : "reached Google but not the script; check the deployment is current";
+  } catch (err) {
+    out.error = String(err.message).slice(0, 140);
+  }
+  return out;
+}
+
 module.exports = async (req, res) => {
+  if (req.method === "GET") {
+    if (String(req.url || "").includes("check=1")) {
+      return res.status(200).json(await checkSheet(process.env.SHEET_WEBHOOK_URL));
+    }
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({ error: "method not allowed" });
+  }
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "method not allowed" });
@@ -109,15 +142,16 @@ module.exports = async (req, res) => {
   const row = { form, submitted_at: new Date().toISOString(), ...fields };
 
   /* Which destination has to succeed for the submission to count, and which is
-     a bonus. A partner enquiry has nowhere else to go. A community sign up
-     prefers the spreadsheet but falls back to Buttondown while no spreadsheet
-     is configured, so the form keeps working either way. */
+     a bonus. Sign ups go to Buttondown first because that is the destination
+     that reliably answers, and reach the spreadsheet as a bonus: a sign up
+     should not fail because a spreadsheet is misconfigured. A partner enquiry
+     is not a mailing list sign up and has nowhere else to go, so it needs the
+     spreadsheet and says so plainly when that is unavailable. */
   const sheet = sheetUrl ? "sheet" : null;
   const buttondown = key ? "buttondown" : null;
   const [primary, secondary] =
     form === "partner" ? [sheet, null] :
-    form === "community" ? (sheet ? [sheet, buttondown] : [buttondown, null]) :
-    [buttondown, sheet];
+    buttondown ? [buttondown, sheet] : [sheet, null];
 
   if (!primary) return res.status(503).json({ error: "unconfigured" });
 
@@ -131,7 +165,7 @@ module.exports = async (req, res) => {
     await send(primary);
   } catch (err) {
     if (err.already) return res.status(409).json({ error: "already" });
-    console.error("%s %d: %s", primary, err.status || 0, String(err.detail || err.message).slice(0, 300));
+    console.error("%s %d (%s): %s", primary, err.status || 0, err.host || "-", String(err.detail || err.message).slice(0, 240));
     return res.status(502).json({ error: "upstream" });
   }
 
