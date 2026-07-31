@@ -151,16 +151,23 @@ module.exports = async (req, res) => {
   const row = { form, submitted_at: new Date().toISOString(), ...fields };
 
   /* Which destination has to succeed for the submission to count, and which is
-     a bonus. Sign ups go to Buttondown first because that is the destination
-     that reliably answers, and reach the spreadsheet as a bonus: a sign up
-     should not fail because a spreadsheet is misconfigured. A partner enquiry
-     is not a mailing list sign up and has nowhere else to go, so it needs the
-     spreadsheet and says so plainly when that is unavailable. */
+     a bonus.
+
+     The spreadsheet is the record for joining the community and for partner
+     enquiries, so those need it. Buttondown comes second there and an address
+     already on the list is not a failure: someone joining the community who
+     already takes the newsletter is an ordinary case, and their circles still
+     have to be written down.
+
+     A newsletter sign up is the other way round. Buttondown is the point of
+     it, and being on the list already is worth saying. */
   const sheet = sheetUrl ? "sheet" : null;
   const buttondown = key ? "buttondown" : null;
   const [primary, secondary] =
-    form === "partner" ? [sheet, null] :
-    buttondown ? [buttondown, sheet] : [sheet, null];
+    // an enquiry is not consent to join a mailing list, so it never reaches one
+    form === "partner" ? [sheet, null]
+      : form === "newsletter" ? (buttondown ? [buttondown, sheet] : [sheet, null])
+      : (sheet ? [sheet, buttondown] : [buttondown, null]);
 
   if (!primary) return res.status(503).json({ error: "unconfigured" });
 
