@@ -260,6 +260,24 @@ footer{background:var(--bg2);padding:72px 0 36px;margin-top:0}
   aspect-ratio: 5/4;
 }
 
+/* Alternating rows put the photo on the left. The original flipped the row with
+   direction:rtl and undid it on both children, which reverses the writing
+   direction of everything inside on the way past. Reordering the photo says the
+   same thing without touching the text. */
+.phase-row.flip .photo {
+  order: -1;
+}
+
+/* The condition split on the science page: prose beside a single large figure,
+   stacking on a narrow screen. */
+.cond-split {
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: start;
+}
+
 @media (max-width: 920px) {
   .phase-row {
     grid-template-columns: 1fr;
