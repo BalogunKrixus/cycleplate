@@ -27,6 +27,20 @@ const DONE: Record<FormKind, string> = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+/* Which fields a form cannot do without, in the order they appear on screen.
+ *
+ * Declared here rather than passed in as a validate callback: the pages that
+ * render this are server components, and a function cannot cross into a client
+ * component. Keeping the rules beside the form is the better shape regardless,
+ * since it puts the wording and the field names in one place. */
+const REQUIRED: Record<FormKind, [field: string, message: string][]> = {
+  newsletter: [],
+  partner: [
+    ["org_name", "Please tell us your organisation name."],
+    ["contact_name", "Please tell us your name."],
+  ],
+};
+
 function messageFor(reason: string, kind: FormKind) {
   if (reason === "already") return "You are already on the list.";
   if (reason === "invalid email") return "Please enter a valid email address.";
@@ -39,12 +53,10 @@ export function SubscribeForm({
   kind,
   submitLabel,
   children,
-  validate,
 }: {
   kind: FormKind;
   submitLabel: string;
   children: ReactNode;
-  validate?: (data: Record<string, string>) => string;
 }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
@@ -66,10 +78,15 @@ export function SubscribeForm({
 
     if (data.cp_hp) return;
 
+    /* Form specific checks run first, so somebody who submits an empty partner
+       enquiry is told about the organisation name at the top rather than the
+       email in the middle. Complaining about the third field while the first is
+       blank reads as though the form is not paying attention. */
     const problem =
-      !data.email || !EMAIL_RE.test(data.email)
+      REQUIRED[kind].find(([field]) => !data[field]?.trim())?.[1] ??
+      (!data.email || !EMAIL_RE.test(data.email)
         ? "Please enter a valid email address."
-        : validate?.(data) ?? "";
+        : "");
 
     if (problem) {
       setResult({ ok: false, text: problem });

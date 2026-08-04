@@ -184,6 +184,110 @@ footer{background:var(--bg2);padding:72px 0 36px;margin-top:0}
 @media (max-width:760px){.nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg);flex-direction:column;align-items:flex-start;padding:20px 28px 26px;gap:18px;box-shadow:var(--sh-lg)}.nav-links.open{display:flex}.nav-burger{display:flex}.nav .btn{display:none}.stat-row{gap:36px}}
 @media (max-width:520px){.foot-grid{grid-template-columns:1fr}.wrap{padding:0 20px}}
 
+/* Page specific grids that used to live in a <style> block in the head of the
+   page that needed them. Collected here now that the pages are components and
+   there is no head to put them in. */
+.pt-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 44px;
+}
+
+.pt-grid .card h3 {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.pt-grid .card .who {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 820px) {
+  .pt-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The wide featured card at the top of the journal: photo beside the text
+   rather than above it. Was an inline style on the anchor, which meant it had
+   no way to collapse on a narrow screen. It does now. */
+.jr-feature {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  align-items: stretch;
+}
+
+.jr-feature .jr-photo {
+  aspect-ratio: auto;
+  min-height: 340px;
+}
+
+.jr-feature .jr-body {
+  padding: 44px 46px;
+  justify-content: center;
+}
+
+@media (max-width: 760px) {
+  .jr-feature {
+    grid-template-columns: 1fr;
+  }
+
+  .jr-feature .jr-photo {
+    aspect-ratio: 16/10;
+    min-height: 0;
+  }
+
+  .jr-feature .jr-body {
+    padding: 28px 26px 32px;
+  }
+}
+
+.phase-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: center;
+  padding: 56px 0;
+}
+
+.phase-row .photo {
+  aspect-ratio: 5/4;
+}
+
+@media (max-width: 920px) {
+  .phase-row {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 40px 0;
+  }
+
+  /* The photo leads on a narrow screen: the text beneath it is long, and a
+     column of prose with an image stranded at the bottom reads as an
+     afterthought. */
+  .phase-row .photo {
+    order: -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .cond-split {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .steps,
+  .feat-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* Header items that exist only inside the mobile menu. The desktop header shows
    the same destinations as a button, so showing both at once would repeat
    itself. */
