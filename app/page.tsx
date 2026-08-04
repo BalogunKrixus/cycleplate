@@ -4,6 +4,7 @@ import { Chart } from "@/components/marketing/Chart";
 import { JournalCard } from "@/components/marketing/JournalCard";
 import { Reveal } from "@/components/marketing/Reveal";
 import { SubscribeForm } from "@/components/marketing/SubscribeForm";
+import { Photo } from "@/components/marketing/Photo";
 
 export const metadata = {
   title: "CyclePlate — Eat right, at the right time",
@@ -140,14 +141,13 @@ export default function HomePage() {
               </Link>
             </div>
           </div>
-          <Reveal className="photo" style={{ aspectRatio: "4/4.6" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/photos/cta-fruit.jpg"
-              alt="A smiling woman holding fresh grapefruit, pears, strawberries and blueberries"
-              style={{ objectPosition: "center 38%" }}
-            />
-          </Reveal>
+          <Photo
+            src="/photos/cta-fruit.jpg"
+            alt="A smiling woman holding fresh grapefruit, pears, strawberries and blueberries"
+            style={{ aspectRatio: "4/4.6" }}
+            objectPosition="center 38%"
+            priority
+          />
         </div>
       </section>
 
@@ -190,13 +190,7 @@ export default function HomePage() {
 
       <section className="band alt">
         <div className="wrap cols">
-          <Reveal className="photo photo-fill">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/photos/cramps-sofa.jpg"
-              alt="A woman resting on a sofa with a hot water bottle, managing cramps"
-            />
-          </Reveal>
+          <Photo src="/photos/cramps-sofa.jpg" alt="A woman resting on a sofa with a hot water bottle, managing cramps" className="photo-fill" />
           <div>
             <h2 style={{ fontSize: "clamp(26px,2.8vw,36px)" }}>
               The conditions nobody is connecting to food
@@ -343,13 +337,7 @@ export default function HomePage() {
 
       <section className="band alt">
         <div className="wrap cols">
-          <Reveal className="photo" style={{ aspectRatio: "5/4" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/photos/groceries-smile.jpg"
-              alt="A woman smiling while unpacking fresh groceries"
-            />
-          </Reveal>
+          <Photo src="/photos/groceries-smile.jpg" alt="A woman smiling while unpacking fresh groceries" style={{ aspectRatio: "5/4" }} />
           <div>
             <p className="eyebrow">Partner with us</p>
             <h2>Good food guidance travels through partners</h2>

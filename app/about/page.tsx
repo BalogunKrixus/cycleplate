@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Reveal } from "@/components/marketing/Reveal";
+import { Photo } from "@/components/marketing/Photo";
 
 export const metadata = {
   title: "About",
@@ -66,14 +67,7 @@ export default function AboutPage() {
               through.
             </p>
           </div>
-          <Reveal className="photo" style={{ aspectRatio: "4/4.6" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/photos/kitchen-apple.jpg"
-              alt="A woman cooking with fresh produce in her own kitchen"
-              style={{ objectPosition: "center 30%" }}
-            />
-          </Reveal>
+          <Photo src="/photos/kitchen-apple.jpg" alt="A woman cooking with fresh produce in her own kitchen" style={{ aspectRatio: "4/4.6" }} objectPosition="center 30%" />
         </div>
       </section>
 
@@ -102,13 +96,7 @@ export default function AboutPage() {
 
       <section className="band alt">
         <div className="wrap cols">
-          <Reveal className="photo" style={{ aspectRatio: "5/4" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/photos/veg-joy.jpg"
-              alt="A woman smiling with fresh colourful vegetables"
-            />
-          </Reveal>
+          <Photo src="/photos/veg-joy.jpg" alt="A woman smiling with fresh colourful vegetables" style={{ aspectRatio: "5/4" }} />
           <div>
             <p className="eyebrow">More than guidance</p>
             <h2>Built with women, not just for them</h2>

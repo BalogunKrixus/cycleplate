@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Reveal } from "@/components/marketing/Reveal";
+import { Photo } from "@/components/marketing/Photo";
 import { getViewer } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -181,14 +182,7 @@ export default async function CommunityPage() {
               </a>
             </div>
           </div>
-          <Reveal className="photo" style={{ aspectRatio: "4/4.4" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/photos/groceries-smile.jpg"
-              alt="A woman smiling warmly"
-              style={{ objectPosition: "center 30%" }}
-            />
-          </Reveal>
+          <Photo src="/photos/groceries-smile.jpg" alt="A woman smiling warmly" style={{ aspectRatio: "4/4.4" }} objectPosition="center 30%" priority />
         </div>
       </section>
 

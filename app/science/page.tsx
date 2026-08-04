@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Chart } from "@/components/marketing/Chart";
 import { Reveal } from "@/components/marketing/Reveal";
+import { Photo } from "@/components/marketing/Photo";
 
 export const metadata = {
   title: "The Science",
@@ -110,10 +111,7 @@ export default function SciencePage() {
                 <p className="muted">{p.body}</p>
                 <p className="small muted">{p.think}</p>
               </div>
-              <Reveal className="photo">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.photo} alt={p.alt} />
-              </Reveal>
+              <Photo src={p.photo} alt={p.alt} />
             </div>
           ))}
         </div>
@@ -213,13 +211,7 @@ export default function SciencePage() {
               already around you.
             </p>
           </div>
-          <Reveal className="photo" style={{ aspectRatio: "5/4" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/photos/kitchen-apple.jpg"
-              alt="A woman in her kitchen with fresh local produce"
-            />
-          </Reveal>
+          <Photo src="/photos/kitchen-apple.jpg" alt="A woman in her kitchen with fresh local produce" style={{ aspectRatio: "5/4" }} />
         </div>
       </section>
 

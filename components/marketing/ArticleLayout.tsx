@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import { Reveal } from "@/components/marketing/Reveal";
+import { Photo } from "@/components/marketing/Photo";
 
 /* The shell every journal article shares: the hero, the lead photo, the
  * references, and the invitation at the end.
@@ -70,10 +70,13 @@ export function ArticleLayout({
         <section className="band" style={{ paddingTop: 0, paddingBottom: 40 }}>
           <div className="wrap">
             <div className="article-hero">
-              <Reveal className="photo" style={{ aspectRatio: "16/9" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photo} alt={alt} />
-              </Reveal>
+              <Photo
+                src={photo}
+                alt={alt}
+                style={{ aspectRatio: "16/9" }}
+                sizes="(max-width: 880px) 100vw, 820px"
+                priority
+              />
             </div>
           </div>
         </section>

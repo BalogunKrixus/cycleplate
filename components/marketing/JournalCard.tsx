@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 import { useReveal } from "@/components/marketing/Reveal";
@@ -32,8 +33,13 @@ export function JournalCard({
   return (
     <Link className={`jr-card ${className}`.trim()} href={href} ref={ref as never}>
       <div className="jr-photo">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photo} alt={alt} />
+        <Image
+          src={photo}
+          alt={alt}
+          fill
+          sizes="(max-width: 600px) 100vw, (max-width: 920px) 50vw, 360px"
+          style={{ objectFit: "cover" }}
+        />
       </div>
       <div className="jr-body">
         <span className="jr-tag">{tag}</span>
