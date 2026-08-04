@@ -88,11 +88,23 @@ textarea{resize:vertical;min-height:120px}
    Matches input[type="text"] specificity so the shared input width is overridden. */
 input.hp{position:absolute;left:-9999px;width:1px;height:1px;padding:0;box-shadow:none;overflow:hidden}
 /* imagery */
-.photo{border-radius:22px;overflow:hidden;box-shadow:var(--sh-lg)}
+/* position:relative so next/image's fill mode has a box to fill. */
+.photo{position:relative;border-radius:22px;overflow:hidden;box-shadow:var(--sh-lg)}
 .photo img{width:100%;height:100%;object-fit:cover}
 .photo-fill{align-self:stretch;min-height:420px;position:relative;overflow:hidden}
 .photo-fill img{position:absolute;inset:0}
-@media (max-width:920px){.photo-fill{aspect-ratio:5/4;align-self:auto}}
+/* min-height has to go when the aspect ratio arrives, or the two of them
+   between them decide the width. At 420px tall and 5/4 the box works out 525px
+   across, which is wider than any phone, so the whole page gained a horizontal
+   scroll and slid sideways under the reader. The ratio should take its height
+   from the width available, not the other way round. */
+@media (max-width:920px){.photo-fill{aspect-ratio:5/4;align-self:auto;min-height:0}}
+
+/* A page that scrolls sideways is almost always a single element a few pixels
+   too wide, and the symptom appears far from the cause. This makes the failure
+   local: the offender gets clipped instead of dragging the whole document with
+   it. It is a net, not a substitute for fixing what falls into it. */
+html,body{overflow-x:hidden}
 /* two column helpers */
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
 .cols-start{align-items:start}
@@ -153,7 +165,8 @@ footer{background:var(--bg2);padding:72px 0 36px;margin-top:0}
 @media (max-width:600px){.jr-grid{grid-template-columns:1fr}}
 .jr-card{display:flex;flex-direction:column;background:var(--card);border-radius:22px;box-shadow:var(--sh);overflow:hidden;transition:transform .18s,box-shadow .18s}
 .jr-card:hover{transform:translateY(-3px);box-shadow:var(--sh-lg)}
-.jr-card .jr-photo{aspect-ratio:16/10;overflow:hidden}
+/* position:relative so next/image's fill mode has a box to fill. */
+.jr-card .jr-photo{position:relative;aspect-ratio:16/10;overflow:hidden}
 .jr-card .jr-photo img{width:100%;height:100%;object-fit:cover}
 .jr-card .jr-body{padding:24px 26px 28px;display:flex;flex-direction:column;gap:10px;flex:1}
 .jr-card .jr-tag{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--accent)}

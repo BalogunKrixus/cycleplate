@@ -41,13 +41,6 @@ export default async function CommunityPage({
 
   const supabase = await createClient();
 
-  const { data: categoryRows } = await supabase
-    .from("categories")
-    .select("*")
-    .eq("is_active", true)
-    .order("sort_order");
-  const categories = (categoryRows ?? []) as Category[];
-
   /* Pinned first, then newest. Deleted rows are filtered by policy rather than
      here, so a soft deleted post cannot leak through a missed condition. */
   let postQuery = supabase
@@ -61,7 +54,19 @@ export default async function CommunityPage({
   if (activeCategory) postQuery = postQuery.eq("category_slug", activeCategory);
   if (query) postQuery = postQuery.ilike("body", `%${query}%`);
 
-  const { data: postRows } = await postQuery;
+  /* The chips and the posts have nothing to say to each other, so they are
+     fetched together rather than one after the other. Every await here is a
+     round trip to a database in another country, and they were queueing. */
+  const [{ data: categoryRows }, { data: postRows }] = await Promise.all([
+    supabase
+      .from("categories")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order"),
+    postQuery,
+  ]);
+
+  const categories = (categoryRows ?? []) as Category[];
   let posts = (postRows ?? []) as Post[];
 
   /* A search has to look at replies too, otherwise a question whose answer

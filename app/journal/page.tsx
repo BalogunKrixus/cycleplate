@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { JournalCard } from "@/components/marketing/JournalCard";
@@ -63,10 +64,13 @@ export default function JournalPage() {
               href="/journal/period-pain"
             >
               <div className="jr-photo">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src="/photos/cramps-sofa.jpg"
                   alt="A woman resting with period pain"
+                  fill
+                  sizes="(max-width: 760px) 100vw, 600px"
+                  priority
+                  style={{ objectFit: "cover" }}
                 />
               </div>
               <div className="jr-body">
