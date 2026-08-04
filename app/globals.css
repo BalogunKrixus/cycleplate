@@ -299,6 +299,26 @@ footer{background:var(--bg2);padding:72px 0 36px;margin-top:0}
   }
 }
 
+/* The numbered steps on the community page, three across.
+ *
+ * Only the mobile override for this existed. The desktop rule was an inline
+ * style on the div in the original HTML, so porting the class without the style
+ * left the grid with nothing to lay out and the steps stacked in a column. That
+ * is the trap with a class whose only rule is inside a media query: it looks
+ * defined, and it is, just never at the width anybody designed for. */
+.feat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 36px 48px;
+  margin-top: 48px;
+}
+
+@media (max-width: 900px) {
+  .feat-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 760px) {
   .steps,
   .feat-grid {

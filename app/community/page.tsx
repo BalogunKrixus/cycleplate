@@ -299,13 +299,6 @@ export default async function CommunityPage() {
               </Reveal>
             ))}
           </div>
-          <p
-            className="small muted"
-            style={{ textAlign: "center", marginTop: 32 }}
-          >
-            Illustrative examples. Community insight is peer support, not medical
-            advice.
-          </p>
         </div>
       </section>
 
