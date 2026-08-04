@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import { AdminNav } from "@/components/admin/AdminNav";
 import { createClient, requireAdmin } from "@/lib/supabase/server";
 import { ModerationQueue } from "@/components/admin/ModerationQueue";
 import type { Flag, Post, Reply } from "@/lib/types";
@@ -72,29 +72,5 @@ export default async function AdminPage() {
       </p>
       <ModerationQueue items={items} />
     </main>
-  );
-}
-
-export function AdminNav({ current }: { current: "moderation" | "members" }) {
-  const link = "text-[14px] transition";
-  return (
-    <nav className="flex items-center gap-5">
-      <Link href="/community" className={`${link} text-muted hover:text-ink`}>
-        Back to the community
-      </Link>
-      <span className="text-faint">|</span>
-      <Link
-        href="/admin"
-        className={`${link} ${current === "moderation" ? "font-medium text-ink" : "text-muted hover:text-ink"}`}
-      >
-        Moderation
-      </Link>
-      <Link
-        href="/admin/members"
-        className={`${link} ${current === "members" ? "font-medium text-ink" : "text-muted hover:text-ink"}`}
-      >
-        Members
-      </Link>
-    </nav>
   );
 }

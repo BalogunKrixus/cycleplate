@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient, requireAdmin } from "@/lib/supabase/server";
-import { AdminNav } from "@/app/admin/page";
+import { AdminNav } from "@/components/admin/AdminNav";
 import { MemberManager } from "@/components/admin/MemberManager";
 import type { Profile } from "@/lib/types";
 
