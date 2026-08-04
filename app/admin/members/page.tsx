@@ -5,7 +5,7 @@ import { MemberManager } from "@/components/admin/MemberManager";
 import type { Profile } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Members | CyclePlate Community" };
+export const metadata = { title: "Members" };
 
 export interface MemberRow {
   id: string;

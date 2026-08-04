@@ -74,6 +74,11 @@ export function HeaderControls({
             <Link href="/account" className="nav-only-mobile">
               {viewer.display_name}
             </Link>
+            {viewer.role === "admin" ? (
+              <Link href="/admin" className="nav-only-mobile">
+                Admin
+              </Link>
+            ) : null}
           </>
         ) : (
           <Link href="/join" className="nav-only-mobile">
@@ -83,6 +88,12 @@ export function HeaderControls({
       </nav>
 
       <div className="nav-cta">
+        {viewer?.role === "admin" ? (
+          <Link href="/admin" className="nav-admin">
+            Admin
+          </Link>
+        ) : null}
+
         {viewer ? (
           <Link href="/account" className="nav-who" title="Your account">
             <Avatar displayName={viewer.display_name} size={28} />

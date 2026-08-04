@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import { createClient, getViewer } from "@/lib/supabase/server";
 import { FEED_PAGE_SIZE } from "@/lib/config";
 import { PostCard } from "@/components/feed/PostCard";
@@ -12,6 +11,12 @@ import { ShareSomething } from "@/components/post/ShareSomething";
 import type { Category, FeedPost, FeedReply, Post, Reply } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = {
+  title: "Community",
+  description:
+    "A place to talk about your cycle, ask questions, and hear from women who have been through the same thing. Anonymous by default, moderated with love.",
+};
 
 export default async function CommunityPage({
   searchParams,
@@ -115,12 +120,14 @@ export default async function CommunityPage({
   }));
 
   return (
+    /* The feed is a narrow column on purpose: a paragraph somebody typed on a
+       phone should not stretch the width of a desktop. Sign in, account and
+       admin used to live in a second nav here, which is exactly the seam that
+       made the community look like a separate site. The site header carries
+       them now, on every page. */
     <main className="mx-auto w-full max-w-2xl px-5 pb-32 pt-10 sm:pt-14">
       <header className="mb-6">
-        <div className="flex items-baseline justify-between gap-4">
-          <h1 className="text-[40px] leading-none sm:text-[52px]">Community</h1>
-          <AccountLink signedIn={!!viewer} isAdmin={viewer?.role === "admin"} />
-        </div>
+        <h1 className="text-[40px] leading-none sm:text-[52px]">Community</h1>
         <p className="mt-3 text-[16px] text-muted">
           Anonymous by default. Moderated with love.
         </p>
@@ -171,32 +178,5 @@ export default async function CommunityPage({
 
       <ShareSomething categories={categories} viewer={viewer} />
     </main>
-  );
-}
-
-function AccountLink({
-  signedIn,
-  isAdmin,
-}: {
-  signedIn: boolean;
-  isAdmin: boolean;
-}) {
-  return (
-    <nav className="flex shrink-0 items-center gap-4 text-[14px]">
-      {isAdmin ? (
-        <Link href="/admin" className="text-muted transition hover:text-ink">
-          Admin
-        </Link>
-      ) : null}
-      {signedIn ? (
-        <Link href="/account" className="text-muted transition hover:text-ink">
-          Account
-        </Link>
-      ) : (
-        <Link href="/auth/sign-in" className="text-muted transition hover:text-ink">
-          Sign in
-        </Link>
-      )}
-    </nav>
   );
 }

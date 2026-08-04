@@ -71,7 +71,10 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-5 py-16">
+    /* Not min-h-screen any more. Centring inside the viewport made sense when
+       this page stood alone; with a header above it and a footer below, it just
+       pushed the form off the bottom and left a stripe of empty cream. */
+    <main className="mx-auto w-full max-w-md px-5 py-20 sm:py-28">
       <h1 className="text-[36px] leading-tight">
         {isSignUp ? "Join the community" : "Welcome back"}
       </h1>
@@ -138,7 +141,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
       <p className="mt-6 text-center text-[14px] text-muted">
         {isSignUp ? "Already a member? " : "New here? "}
         <Link
-          href={isSignUp ? "/auth/sign-in" : "/auth/sign-up"}
+          href={isSignUp ? "/auth/sign-in" : "/join"}
           className="text-menstrual underline"
         >
           {isSignUp ? "Sign in" : "Create an account"}

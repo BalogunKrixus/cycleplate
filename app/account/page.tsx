@@ -4,7 +4,7 @@ import { getViewer } from "@/lib/supabase/server";
 import { AccountSettings } from "@/components/auth/AccountSettings";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Account | CyclePlate Community" };
+export const metadata = { title: "Account" };
 
 export default async function AccountPage() {
   const viewer = await getViewer();

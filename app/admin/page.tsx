@@ -5,7 +5,7 @@ import { ModerationQueue } from "@/components/admin/ModerationQueue";
 import type { Flag, Post, Reply } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Moderation | CyclePlate Community" };
+export const metadata = { title: "Moderation" };
 
 export type QueueItem = {
   flag: Flag;
