@@ -66,7 +66,7 @@ export function EmptyFeed({
           yourself.
         </p>
         <Link
-          href="/community"
+          href="/app"
           className="mt-6 inline-flex text-[15px] font-medium text-accent"
         >
           See everything instead

@@ -23,7 +23,7 @@ export default async function MembersPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const admin = await requireAdmin();
-  if (!admin) redirect("/community");
+  if (!admin) redirect("/admin/login");
 
   const params = await searchParams;
   const query = params.q?.trim() ?? "";

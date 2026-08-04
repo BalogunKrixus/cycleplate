@@ -12,7 +12,7 @@ export default async function AccountPage() {
 
   return (
     <main className="mx-auto w-full max-w-lg px-5 py-14">
-      <Link href="/community" className="text-[14px] text-muted hover:text-ink">
+      <Link href="/app" className="text-[14px] text-muted hover:text-ink">
         Back to the community
       </Link>
       <h1 className="mt-4 text-[36px] leading-tight">Your account</h1>

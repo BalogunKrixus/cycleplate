@@ -68,7 +68,7 @@ export function HeaderControls({
             repeat it inside the menu, where there is room for it. */}
         {viewer ? (
           <>
-            <Link href="/community" className="nav-only-mobile">
+            <Link href="/app" className="nav-only-mobile">
               Go to community
             </Link>
             <Link href="/account" className="nav-only-mobile">
@@ -128,7 +128,7 @@ export function HeaderControls({
         </button>
 
         {viewer ? (
-          <Link href="/community" className="btn btn-primary">
+          <Link href="/app" className="btn btn-primary">
             Go to community
           </Link>
         ) : (

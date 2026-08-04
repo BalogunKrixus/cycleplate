@@ -17,7 +17,7 @@ export type QueueItem = {
 
 export default async function AdminPage() {
   const admin = await requireAdmin();
-  if (!admin) redirect("/community");
+  if (!admin) redirect("/admin/login");
 
   const supabase = await createClient();
 

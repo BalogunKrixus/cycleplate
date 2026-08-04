@@ -71,7 +71,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
       }
     }
 
-    router.push("/community");
+    router.push("/app");
     router.refresh();
   }
 

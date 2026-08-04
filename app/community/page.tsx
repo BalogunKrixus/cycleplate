@@ -1,205 +1,360 @@
-import { Suspense } from "react";
 import Link from "next/link";
-import { createClient, getViewer } from "@/lib/supabase/server";
-import { FEED_PAGE_SIZE } from "@/lib/config";
-import { PostCard } from "@/components/feed/PostCard";
-import { EmptyFeed } from "@/components/feed/EmptyFeed";
-import {
-  CategoryChips,
-  GuidelinesBanner,
-  SearchBar,
-} from "@/components/feed/FeedChrome";
-import { ShareSomething } from "@/components/post/ShareSomething";
-import type { Category, FeedPost, FeedReply, Post, Reply } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
+import { Reveal } from "@/components/marketing/Reveal";
+import { getViewer } from "@/lib/supabase/server";
 
 export const metadata = {
   title: "Community",
   description:
-    "A place to talk about your cycle, ask questions, and hear from women who have been through the same thing. Anonymous by default, moderated with love.",
+    "A space for women to talk openly about their health, cycles and bodies. Ask a question, share what worked, and hear from women who have lived the same thing.",
 };
 
-export default async function CommunityPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string; category?: string }>;
-}) {
-  const params = await searchParams;
-  const query = params.q?.trim() ?? "";
-  const activeCategory = params.category ?? null;
+/* The public face of the community.
+ *
+ * This is a marketing page and stays one. The community itself is an
+ * application behind a sign in, at /app, and the only job of this page is to
+ * explain what is in there and open the door. It used to end in a sign up form
+ * that collected an email and posted it to a spreadsheet, which was a stand in
+ * for an account. Real accounts exist now, so the form is a call to action.
+ */
 
-  const supabase = await createClient();
+/* The six shown here are real categories in the feed, so each one links to it
+   filtered. Naming a circle the product does not have is the kind of small lie
+   that gets discovered thirty seconds after signing up. */
+const CIRCLES = [
+  {
+    slug: "pcos-journey",
+    label: "PCOS",
+    phase: "luteal",
+    mix: 14,
+    solid: true,
+    body: "Managing insulin, cycles, cravings and everything in between, together.",
+  },
+  {
+    slug: "endometriosis",
+    label: "Endometriosis",
+    phase: "ovulatory",
+    mix: 16,
+    solid: false,
+    body: "For the long road to diagnosis and the daily work of living well with it.",
+  },
+  {
+    slug: "period-pain",
+    label: "Period pain",
+    phase: "menstrual",
+    mix: 12,
+    solid: true,
+    body: "What actually helps with cramps, from heat to omega-3 to when to see a doctor.",
+  },
+  {
+    slug: "pms-and-mood",
+    label: "PMS & mood",
+    phase: "follicular",
+    mix: 16,
+    solid: false,
+    body: "The luteal-phase dip, cravings and low mood, and the food that steadies them.",
+  },
+  {
+    slug: "cravings",
+    label: "Cravings",
+    phase: "accent",
+    mix: 14,
+    solid: true,
+    body: "What you want and when you want it, and the swaps that actually satisfy.",
+  },
+  {
+    slug: "first-periods",
+    label: "First periods",
+    phase: "ink2",
+    mix: 16,
+    solid: true,
+    body: "For the beginning of it all, and for the people helping someone through it.",
+  },
+];
+
+const STEPS = [
+  {
+    n: "1",
+    title: "Sign up",
+    body: "Create a free account. We give you a handle, so your name and email are never shown next to anything you post.",
+  },
+  {
+    n: "2",
+    title: "Ask anything",
+    body: "Post a question about your cycle, symptoms or nutrition, and choose the category it belongs in.",
+  },
+  {
+    n: "3",
+    title: "Hear from women who relate",
+    body: "Get insight from women who have been there, plus sourced notes from our team.",
+  },
+];
+
+const THREADS = [
+  {
+    asker: { initial: "A", colour: "var(--luteal)" },
+    meta: "Amara · PCOS · 2 days ago",
+    question:
+      "I keep reading that a “low-GI diet” helps PCOS but I don't really know what that means day to day. What do you actually eat for breakfast?",
+    answerer: { initial: "N", colour: "var(--follicular)" },
+    answerMeta: "Ngozi",
+    badge: "Member",
+    answer:
+      "Swapping white bread and sugary cereal for eggs, beans, oats with nuts and plain yoghurt made the biggest difference for me. My energy stopped crashing by mid-morning. It took a few weeks to feel it but my cycles got more regular too.",
+  },
+  {
+    asker: { initial: "P", colour: "var(--menstrual)" },
+    meta: "Posted anonymously · Period pain · 5 days ago",
+    question:
+      "Does anything genuinely help cramps, or am I stuck with painkillers every month? Honestly asking.",
+    answerer: { initial: "L", colour: "var(--ovulatory)" },
+    answerMeta: "Lola",
+    badge: "Member",
+    answer:
+      "Heat and gentle movement help me a lot on day one. I also started eating more oily fish and it took the edge off over a couple of months. The omega-3 research on this is actually solid, but please still see a doctor if the pain is severe, that's not something to just push through.",
+  },
+  {
+    asker: { initial: "T", colour: "var(--follicular)" },
+    meta: "Temi · PMS & mood · 1 week ago",
+    question:
+      "The week before my period my mood absolutely tanks and I crave everything. Is that normal or is something wrong with me?",
+    answerer: { initial: "CP", colour: "var(--accent)" },
+    answerMeta: "CyclePlate Team",
+    badge: "Sourced note",
+    answer:
+      "You are very much not alone, this is the luteal phase, when progesterone rises and insulin sensitivity dips. Double-blind trials have found magnesium and vitamin B6 reduce PMS severity versus placebo, and complex carbohydrates help keep blood sugar steady. It's real, it's common, and food genuinely helps.",
+  },
+];
+
+const RULES = [
+  {
+    title: "Kindness first",
+    body: "Every woman's experience is valid. No judgement, no shaming, no diet policing. Ever.",
+  },
+  {
+    title: "Support, not diagnosis",
+    body: "The community is peer support and sourced information. It is not a substitute for a clinician, and we will always tell you when it's time to see one.",
+  },
+  {
+    title: "Privacy is protected",
+    body: "You post under a handle we generate, never your name or your email. What you share stays within the community, and we never sell your data.",
+  },
+];
+
+export default async function CommunityPage() {
   const viewer = await getViewer();
 
-  const { data: categoryRows } = await supabase
-    .from("categories")
-    .select("*")
-    .eq("is_active", true)
-    .order("sort_order");
-  const categories = (categoryRows ?? []) as Category[];
-
-  /* Pinned first, then newest. Deleted rows are filtered by policy rather than
-     here, so a soft deleted post cannot leak through a missed condition. */
-  let postQuery = supabase
-    .from("posts")
-    .select("*")
-    .eq("is_deleted", false)
-    .order("is_pinned", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(FEED_PAGE_SIZE);
-
-  if (activeCategory) postQuery = postQuery.eq("category_slug", activeCategory);
-  if (query) postQuery = postQuery.ilike("body", `%${query}%`);
-
-  const { data: postRows } = await postQuery;
-  let posts = (postRows ?? []) as Post[];
-
-  /* A search has to look at replies too, otherwise a question whose answer
-     mentions the term simply vanishes from the results. Posts found this way
-     carry the matching reply so the reason they appear is visible. */
-  let repliesByPost = new Map<string, Reply[]>();
-
-  if (query) {
-    const { data: replyRows } = await supabase
-      .from("replies")
-      .select("*")
-      .eq("is_deleted", false)
-      .ilike("body", `%${query}%`)
-      .limit(FEED_PAGE_SIZE);
-
-    const matchedReplies = (replyRows ?? []) as Reply[];
-    const known = new Set(posts.map((p) => p.id));
-    const missing = [
-      ...new Set(matchedReplies.map((r) => r.post_id).filter((id) => !known.has(id))),
-    ];
-
-    if (missing.length) {
-      const { data: parents } = await supabase
-        .from("posts")
-        .select("*")
-        .in("id", missing)
-        .eq("is_deleted", false);
-      posts = [...posts, ...((parents ?? []) as Post[])];
-    }
-
-    for (const reply of matchedReplies) {
-      repliesByPost.set(reply.post_id, [
-        ...(repliesByPost.get(reply.post_id) ?? []),
-        reply,
-      ]);
-    }
-
-    posts.sort((a, b) => {
-      if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
-      return b.created_at.localeCompare(a.created_at);
-    });
-  }
-
-  /* One query for the viewer's likes rather than one per card. */
-  let likedPosts = new Set<string>();
-  let likedReplies = new Set<string>();
-
-  if (viewer && posts.length) {
-    const { data: likeRows } = await supabase
-      .from("likes")
-      .select("target_type, target_id")
-      .eq("user_id", viewer.id);
-
-    for (const like of likeRows ?? []) {
-      if (like.target_type === "post") likedPosts.add(like.target_id as string);
-      else likedReplies.add(like.target_id as string);
-    }
-  }
-
-  const feed: FeedPost[] = posts.map((post) => ({
-    ...post,
-    liked_by_viewer: likedPosts.has(post.id),
-    matching_replies: repliesByPost.get(post.id)?.map((r) => ({
-      ...(r as FeedReply),
-      liked_by_viewer: likedReplies.has(r.id),
-    })),
-  }));
+  /* Somebody who is already a member should be offered the door they actually
+     want. Asking a member to join is the tell that two things were bolted
+     together rather than built as one. */
+  const primary = viewer
+    ? { href: "/app", label: "Go to the community" }
+    : { href: "/join", label: "Join the community" };
 
   return (
-    /* The feed is a narrow column on purpose: a paragraph somebody typed on a
-       phone should not stretch the width of a desktop. Sign in, account and
-       admin used to live in a second nav here, which is exactly the seam that
-       made the community look like a separate site. The site header carries
-       them now, on every page. */
-    <main className="mx-auto w-full max-w-2xl px-5 pb-32 pt-10 sm:pt-14">
-      <header className="mb-7">
-        <h1 className="text-[40px] leading-none sm:text-[52px]">Community</h1>
-        <p className="mt-3 max-w-[46ch] text-[16px] text-muted">
-          {viewer
-            ? "Anonymous by default. Moderated with love. You are posting as " +
-              viewer.display_name +
-              "."
-            : "Ask the questions you were told not to, and hear from women whose cycles look like yours. Anonymous by default, moderated with love."}
-        </p>
-
-        {/* A visitor reading the feed has no idea an account is free, anonymous
-            or even possible until something says so. The floating button asks
-            them to write; this asks them to belong, which is the smaller step. */}
-        {!viewer ? (
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <Link href="/join" className="btn btn-primary">
-              Join the community
-            </Link>
-            <Link
-              href="/auth/sign-in"
-              className="text-[15px] font-medium text-muted transition hover:text-ink"
+    <main>
+      <section className="band" style={{ paddingBottom: 56 }}>
+        <div className="wrap cols">
+          <div>
+            <p className="eyebrow">Community</p>
+            <h1>Ask the questions you were told not to.</h1>
+            <p className="lede" style={{ maxWidth: "none" }}>
+              CyclePlate&apos;s community is a space for women to talk openly
+              about their health, cycles, and bodies. Ask a question, share what
+              worked for you, and hear from women who have lived the same thing.
+              Everything grounded in respect, and where it matters, in the
+              evidence.
+            </p>
+            <div
+              style={{
+                display: "flex",
+                gap: 14,
+                flexWrap: "wrap",
+                marginTop: 28,
+              }}
             >
-              Already a member? Sign in
+              <Link href={primary.href} className="btn btn-primary">
+                {primary.label}
+              </Link>
+              <a href="#threads" className="btn btn-quiet">
+                See what women are asking
+              </a>
+            </div>
+          </div>
+          <Reveal className="photo" style={{ aspectRatio: "4/4.4" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/photos/groceries-smile.jpg"
+              alt="A woman smiling warmly"
+              style={{ objectPosition: "center 30%" }}
+            />
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="band alt">
+        <div className="wrap">
+          <p className="eyebrow">How the community works</p>
+          <h2 style={{ maxWidth: "22ch" }}>
+            A simple, kind way to get real answers
+          </h2>
+          <div className="feat-grid">
+            {STEPS.map((step) => (
+              <div key={step.n} style={{ display: "flex", gap: 18 }}>
+                <div
+                  className="serif"
+                  style={{
+                    fontSize: 40,
+                    color: "var(--accent)",
+                    lineHeight: 1,
+                    flex: "none",
+                  }}
+                >
+                  {step.n}
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 19, margin: "2px 0 6px" }}>
+                    {step.title}
+                  </h3>
+                  <p className="muted small" style={{ margin: 0 }}>
+                    {step.body}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="band">
+        <div className="wrap">
+          <p className="eyebrow">Circles</p>
+          <h2 style={{ maxWidth: "20ch" }}>
+            Find the women who understand your experience
+          </h2>
+          <div className="circle-grid">
+            {CIRCLES.map((circle) => (
+              <Reveal key={circle.slug} className="card circle-card">
+                <span
+                  className="phase-chip"
+                  style={{
+                    background: `color-mix(in srgb,var(--${circle.phase}) ${circle.mix}%,var(--card))`,
+                    color: circle.solid
+                      ? `var(--${circle.phase})`
+                      : `color-mix(in srgb,var(--${circle.phase}) 70%,var(--ink))`,
+                  }}
+                >
+                  <span
+                    className="dot"
+                    style={{ background: `var(--${circle.phase})` }}
+                  />
+                  {circle.label}
+                </span>
+                <p style={{ margin: "14px 0 0" }} className="muted">
+                  {circle.body}
+                </p>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="band alt" id="threads">
+        <div className="wrap" style={{ maxWidth: 820 }}>
+          <p className="eyebrow">Inside the community</p>
+          <h2>Real questions, real insight</h2>
+          <p className="lede">
+            A glimpse of the kinds of conversations happening every day.
+          </p>
+          <div className="qa-thread">
+            {THREADS.map((thread) => (
+              <Reveal key={thread.meta} className="qa-card">
+                <div className="qa-q">
+                  <div
+                    className="qa-av"
+                    style={{ background: thread.asker.colour }}
+                  >
+                    {thread.asker.initial}
+                  </div>
+                  <div>
+                    <div className="qa-meta">{thread.meta}</div>
+                    <p style={{ margin: 0 }}>{thread.question}</p>
+                  </div>
+                </div>
+                <div className="qa-a">
+                  <div
+                    className="qa-av"
+                    style={{ background: thread.answerer.colour }}
+                  >
+                    {thread.answerer.initial}
+                  </div>
+                  <div>
+                    <div className="qa-meta">
+                      {thread.answerMeta}{" "}
+                      <span className="qa-badge">{thread.badge}</span> · replied
+                    </div>
+                    <p style={{ margin: 0 }}>{thread.answer}</p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+          <p
+            className="small muted"
+            style={{ textAlign: "center", marginTop: 32 }}
+          >
+            Illustrative examples. Community insight is peer support, not medical
+            advice.
+          </p>
+        </div>
+      </section>
+
+      <section className="band">
+        <div className="wrap" style={{ maxWidth: 880 }}>
+          <h2>A few house rules</h2>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 32,
+              marginTop: 40,
+            }}
+          >
+            {RULES.map((rule) => (
+              <Reveal key={rule.title}>
+                <h3>{rule.title}</h3>
+                <p className="muted" style={{ margin: 0, maxWidth: "64ch" }}>
+                  {rule.body}
+                </p>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Where the sign up form used to be. It collected an email into a
+          spreadsheet because there was nothing to sign up to; there is now. */}
+      <section className="band alt" id="join">
+        <div className="wrap" style={{ maxWidth: 640, textAlign: "center" }}>
+          <h2>{viewer ? "Your community is waiting" : "Come and join us"}</h2>
+          <p className="lede" style={{ margin: "0 auto" }}>
+            {viewer
+              ? `You are signed in as ${viewer.display_name}. Pick up where you left off.`
+              : "It is free. Create an account, choose a category, and start asking, or just read for a while. There is no wrong way to be here."}
+          </p>
+          <div style={{ marginTop: 32 }}>
+            <Link href={primary.href} className="btn btn-primary">
+              {primary.label}
             </Link>
           </div>
-        ) : null}
-      </header>
-
-      <div className="mb-5">
-        <GuidelinesBanner />
-      </div>
-
-      <div className="mb-4">
-        <Suspense fallback={<div className="h-12" />}>
-          <SearchBar initial={query} />
-        </Suspense>
-      </div>
-
-      <div className="mb-6">
-        <Suspense fallback={<div className="h-10" />}>
-          <CategoryChips categories={categories} active={activeCategory} />
-        </Suspense>
-      </div>
-
-      {query ? (
-        <p className="mb-4 text-[14px] text-muted">
-          {feed.length === 0
-            ? `Nothing found for "${query}"`
-            : `${feed.length} result${feed.length === 1 ? "" : "s"} for "${query}"`}
-        </p>
-      ) : null}
-
-      <div className="flex flex-col gap-4">
-        {feed.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            categories={categories}
-            viewer={viewer}
-          />
-        ))}
-
-        {feed.length === 0 && !query ? (
-          <EmptyFeed
-            signedIn={!!viewer}
-            categories={categories}
-            filtered={!!activeCategory}
-          />
-        ) : null}
-      </div>
-
-      <ShareSomething categories={categories} viewer={viewer} />
+          {!viewer ? (
+            <p className="small muted" style={{ marginTop: 20 }}>
+              Already a member?{" "}
+              <Link href="/auth/sign-in">Sign in</Link>.
+            </p>
+          ) : null}
+        </div>
+      </section>
     </main>
   );
 }

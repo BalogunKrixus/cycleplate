@@ -19,7 +19,7 @@ export const metadata = {
  */
 export default async function JoinPage() {
   const viewer = await getViewer();
-  if (viewer) redirect("/community");
+  if (viewer) redirect("/app");
 
   return <AuthForm mode="sign-up" />;
 }

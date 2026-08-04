@@ -12,7 +12,7 @@ export function AdminNav({ current }: { current: "moderation" | "members" }) {
 
   return (
     <nav className="flex items-center gap-5">
-      <Link href="/community" className={`${link} text-muted hover:text-ink`}>
+      <Link href="/app" className={`${link} text-muted hover:text-ink`}>
         Back to the community
       </Link>
       <span className="text-faint">|</span>
