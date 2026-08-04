@@ -48,9 +48,14 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         return;
       }
       /* With email confirmation switched on there is no session yet, so say so
-         rather than dropping them on a feed they cannot post to. */
+         rather than dropping them on a feed they cannot post to. The link lands
+         on /auth/callback, which signs them in on the way through, so telling
+         them to come back and sign in afterwards would be describing a step
+         that no longer exists. */
       if (!data.session) {
-        setNotice("Check your inbox to confirm your address, then sign in.");
+        setNotice(
+          "Almost there. Check your inbox and open the link we sent, and it will bring you straight into the community.",
+        );
         return;
       }
     } else {

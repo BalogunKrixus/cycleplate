@@ -1,7 +1,9 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { createClient, getViewer } from "@/lib/supabase/server";
 import { FEED_PAGE_SIZE } from "@/lib/config";
 import { PostCard } from "@/components/feed/PostCard";
+import { EmptyFeed } from "@/components/feed/EmptyFeed";
 import {
   CategoryChips,
   GuidelinesBanner,
@@ -126,11 +128,32 @@ export default async function CommunityPage({
        made the community look like a separate site. The site header carries
        them now, on every page. */
     <main className="mx-auto w-full max-w-2xl px-5 pb-32 pt-10 sm:pt-14">
-      <header className="mb-6">
+      <header className="mb-7">
         <h1 className="text-[40px] leading-none sm:text-[52px]">Community</h1>
-        <p className="mt-3 text-[16px] text-muted">
-          Anonymous by default. Moderated with love.
+        <p className="mt-3 max-w-[46ch] text-[16px] text-muted">
+          {viewer
+            ? "Anonymous by default. Moderated with love. You are posting as " +
+              viewer.display_name +
+              "."
+            : "Ask the questions you were told not to, and hear from women whose cycles look like yours. Anonymous by default, moderated with love."}
         </p>
+
+        {/* A visitor reading the feed has no idea an account is free, anonymous
+            or even possible until something says so. The floating button asks
+            them to write; this asks them to belong, which is the smaller step. */}
+        {!viewer ? (
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <Link href="/join" className="btn btn-primary">
+              Join the community
+            </Link>
+            <Link
+              href="/auth/sign-in"
+              className="text-[15px] font-medium text-muted transition hover:text-ink"
+            >
+              Already a member? Sign in
+            </Link>
+          </div>
+        ) : null}
       </header>
 
       <div className="mb-5">
@@ -168,11 +191,11 @@ export default async function CommunityPage({
         ))}
 
         {feed.length === 0 && !query ? (
-          <div className="rounded-card bg-surface p-10 text-center shadow-card">
-            <p className="text-[16px] text-muted">
-              Nothing here yet. Start the first conversation.
-            </p>
-          </div>
+          <EmptyFeed
+            signedIn={!!viewer}
+            categories={categories}
+            filtered={!!activeCategory}
+          />
         ) : null}
       </div>
 

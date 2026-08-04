@@ -31,6 +31,35 @@ export function ShareSomething({
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
+  /* Anything on the page can ask for the composer, carrying a starting question
+     and a category. The empty feed uses it so a suggestion is one click from a
+     half written post rather than a blank box and a cursor.
+
+     An event rather than lifted state: the composer is a floating element that
+     belongs to the page, not to the feed, and threading a callback down through
+     a server component to reach it would mean making that component a client
+     one for no other reason. */
+  useEffect(() => {
+    function onCompose(event: Event) {
+      const { prompt, category: from } = (event as CustomEvent<{
+        prompt?: string;
+        category?: string;
+      }>).detail ?? {};
+
+      if (!viewer) {
+        router.push("/join");
+        return;
+      }
+
+      if (prompt) setBody(prompt);
+      if (from) setCategory(from);
+      setOpen(true);
+    }
+
+    window.addEventListener("cp:compose", onCompose);
+    return () => window.removeEventListener("cp:compose", onCompose);
+  }, [viewer, router]);
+
   async function submit() {
     setError(null);
     setBusy(true);
@@ -53,7 +82,10 @@ export function ShareSomething({
     <>
       <button
         type="button"
-        onClick={() => (viewer ? setOpen(true) : router.push("/auth/sign-in"))}
+        /* Somebody who is not signed in and just clicked "share something" is
+           not returning, they are arriving. Sign in was the wrong door to hold
+           open for them. */
+        onClick={() => (viewer ? setOpen(true) : router.push("/join"))}
         className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-chip bg-ink px-5 py-3.5
                    text-[15px] font-medium text-cream shadow-lift transition hover:-translate-y-0.5"
       >
