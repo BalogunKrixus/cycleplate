@@ -181,7 +181,15 @@ footer{background:var(--bg2);padding:72px 0 36px;margin-top:0}
 @media (prefers-reduced-motion:no-preference){.rv{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}.rv.in{opacity:1;transform:none}}
 /* responsive */
 @media (max-width:920px){.cols{grid-template-columns:1fr;gap:36px}.foot-grid{grid-template-columns:1fr 1fr}.band{padding:64px 0}}
-@media (max-width:760px){.nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg);flex-direction:column;align-items:flex-start;padding:20px 28px 26px;gap:18px;box-shadow:var(--sh-lg)}.nav-links.open{display:flex}.nav-burger{display:flex}.nav .btn{display:none}.stat-row{gap:36px}}
+@media (max-width:760px){.nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg);flex-direction:column;align-items:flex-start;padding:20px 28px 26px;gap:18px;box-shadow:var(--sh-lg)}.nav-links.open{display:flex}.nav-burger{display:flex}.nav .btn{display:none}.stat-row{gap:36px}
+/* What was holding the theme toggle and the burger against the right edge was
+   the auto left margin on .nav-links. Below this width those links become
+   display:none, and an element that is not in the layout cannot push anything:
+   the margin stops applying along with everything else about the box. The
+   controls collapsed back against the logo, leaving a hand's width of empty
+   header beside them. The auto margin has to live on something that is still
+   there, so it moves to the controls themselves. */
+.nav-cta{margin-left:auto}}
 @media (max-width:520px){.foot-grid{grid-template-columns:1fr}.wrap{padding:0 20px}}
 
 /* Page specific grids that used to live in a <style> block in the head of the
