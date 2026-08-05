@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <!--
+    The CyclePlate mark as a browser tab icon.
+
+    Two differences from the mark on the page, both because this is usually
+    drawn at 16 pixels. The faint inner ring is dropped, since at that size it
+    is a grey smudge rather than a detail, and the arcs are thicker with a
+    wider gap so the four phases still read as four rather than merging into a
+    single ring.
+
+    The cream tile matters more than it looks: without a background the mark
+    disappears into a dark browser theme, which is where a good half of people
+    will see it.
+  -->
+  <rect width="120" height="120" rx="26" fill="#FAF6EF"/>
+  <g fill="none" stroke-width="17" stroke-linecap="round">
+    <path d="M 68.3 20.6 A 40 40 0 0 1 99.4 51.7" stroke="#B23A4B"/>
+    <path d="M 99.4 68.3 A 40 40 0 0 1 68.3 99.4" stroke="#7C9A65"/>
+    <path d="M 51.7 99.4 A 40 40 0 0 1 20.6 68.3" stroke="#E0A33E"/>
+    <path d="M 20.6 51.7 A 40 40 0 0 1 51.7 20.6" stroke="#96617F"/>
+  </g>
+</svg>

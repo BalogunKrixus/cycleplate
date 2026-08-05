@@ -1,0 +1,120 @@
+<!--
+  CyclePlate: "Confirm your signup" email.
+
+  Paste into Supabase, Authentication, Emails, Confirm signup. Set the subject
+  to: Confirm your email and join the CyclePlate community
+
+  Written as table layout with inline styles on purpose. Email clients are not
+  browsers: Outlook still renders through Word, Gmail strips <style> blocks in
+  some contexts, and flexbox and CSS variables are simply not available. Every
+  rule that matters is inline.
+
+  Colours are the site's own, written out rather than referenced, for the same
+  reason.
+
+  IMPORTANT: this changes what the email looks like, not who it comes from.
+  The sender is set in Supabase under Project Settings, Authentication, SMTP
+  Settings. Until custom SMTP is configured it will arrive from Supabase's
+  shared address, which is also rate limited to a handful of messages an hour
+  and lands in spam more often than a domain of your own.
+-->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FAF6EF;margin:0;padding:32px 12px;font-family:Helvetica,Arial,sans-serif;">
+  <tr>
+    <td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;background:#FFFCF5;border-radius:22px;overflow:hidden;">
+
+        <tr>
+          <td style="padding:40px 40px 0;text-align:center;">
+            <!-- The mark, drawn as four arcs. Inline SVG is unreliable in
+                 email, so this is the wordmark alone. -->
+            <div style="font-size:26px;font-weight:700;letter-spacing:-0.02em;">
+              <span style="color:#2A1F17;">Cycle</span><span style="color:#C2410C;">Plate</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:34px 40px 0;">
+            <h1 style="margin:0;font-size:27px;line-height:1.25;color:#2A1F17;font-weight:600;">
+              One tap and you are in.
+            </h1>
+            <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#6B5D4F;">
+              Welcome to the CyclePlate community. Confirm your email and we
+              will take you straight to the feed, already signed in.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:28px 40px 0;">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td align="center" style="background:#C15A3D;border-radius:14px;">
+                  <a href="{{ .ConfirmationURL }}"
+                     style="display:block;padding:16px 28px;font-size:16px;font-weight:600;color:#FFF8F0;text-decoration:none;">
+                    Confirm my email
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:26px 40px 0;">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F2ECDF;border-radius:16px;">
+              <tr>
+                <td style="padding:20px 22px;">
+                  <p style="margin:0;font-size:14px;font-weight:600;color:#2A1F17;">
+                    What happens next
+                  </p>
+                  <p style="margin:10px 0 0;font-size:14px;line-height:1.6;color:#6B5D4F;">
+                    You post under a handle we generate for you, so your name
+                    and email are never shown next to anything you write. You
+                    can read for as long as you like before saying a word.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:24px 40px 0;">
+            <p style="margin:0;font-size:13px;line-height:1.6;color:#6B5D4F;">
+              If the button does not work, paste this into your browser:
+            </p>
+            <p style="margin:8px 0 0;font-size:12px;line-height:1.5;word-break:break-all;">
+              <a href="{{ .ConfirmationURL }}" style="color:#C15A3D;">{{ .ConfirmationURL }}</a>
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:28px 40px 40px;">
+            <p style="margin:0;padding-top:22px;border-top:1px solid #EDE4D4;font-size:13px;line-height:1.6;color:#6B5D4F;">
+              Did not sign up? Ignore this and nothing happens. The link expires
+              on its own and no account is created.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;">
+        <tr>
+          <td style="padding:22px 40px;text-align:center;">
+            <p style="margin:0;font-size:12px;line-height:1.6;color:#6B5D4F;">
+              CyclePlate is a nutrition wellness tool. It is not medical advice,
+              diagnosis, or treatment.
+            </p>
+            <p style="margin:10px 0 0;font-size:12px;color:#6B5D4F;">
+              <a href="https://hellocycleplate.com" style="color:#6B5D4F;">hellocycleplate.com</a>
+            </p>
+          </td>
+        </tr>
+      </table>
+
+    </td>
+  </tr>
+</table>

@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
+import { CheckYourEmail } from "@/components/auth/CheckYourEmail";
+import { PasswordField } from "@/components/auth/PasswordField";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Primitives";
 import { generateDisplayName } from "@/lib/displayName";
@@ -14,16 +17,20 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [sentTo, setSentTo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const router = useRouter();
 
   const isSignUp = mode === "sign-up";
 
+  /* Once the email is away, the form has nothing left to say and replaces
+     itself. Leaving it on screen under a line of green text is what made
+     people wonder whether it had worked. */
+  if (sentTo) return <CheckYourEmail email={sentTo} />;
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setNotice(null);
     setBusy(true);
 
     const supabase = createClient();
@@ -47,15 +54,11 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         setError(error.message);
         return;
       }
-      /* With email confirmation switched on there is no session yet, so say so
-         rather than dropping them on a feed they cannot post to. The link lands
-         on /auth/callback, which signs them in on the way through, so telling
-         them to come back and sign in afterwards would be describing a step
-         that no longer exists. */
+
+      /* No session means confirmation is switched on and the email is on its
+         way. A session means it is switched off and they are already in. */
       if (!data.session) {
-        setNotice(
-          "Almost there. Check your inbox and open the link we sent, and it will bring you straight into the community.",
-        );
+        setSentTo(email);
         return;
       }
     } else {
@@ -76,9 +79,6 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   }
 
   return (
-    /* Not min-h-screen any more. Centring inside the viewport made sense when
-       this page stood alone; with a header above it and a footer below, it just
-       pushed the form off the bottom and left a stripe of empty cream. */
     <main className="mx-auto w-full max-w-md px-5 py-20 sm:py-28">
       <h1 className="text-[36px] leading-tight">
         {isSignUp ? "Join the community" : "Welcome back"}
@@ -105,36 +105,27 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           />
         </div>
 
-        <div>
-          <label
-            htmlFor="password"
-            className="mb-1.5 block text-[14px] font-medium"
-          >
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            required
-            minLength={8}
-            autoComplete={isSignUp ? "new-password" : "current-password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="input"
-          />
-          {isSignUp ? (
-            <p className="mt-1.5 text-[13px] text-faint">At least 8 characters.</p>
-          ) : null}
-        </div>
+        <PasswordField
+          id="password"
+          label="Password"
+          value={password}
+          onChange={setPassword}
+          autoComplete={isSignUp ? "new-password" : "current-password"}
+          minLength={isSignUp ? 8 : undefined}
+          hint={isSignUp ? "At least 8 characters." : undefined}
+        />
+
+        {!isSignUp ? (
+          <p className="text-right text-[13px]">
+            <Link href="/auth/forgot-password" className="text-muted hover:text-ink">
+              Forgotten your password?
+            </Link>
+          </p>
+        ) : null}
 
         {error ? (
           <p role="alert" className="text-[13px] text-menstrual">
             {error}
-          </p>
-        ) : null}
-        {notice ? (
-          <p role="status" className="text-[13px] text-follicular">
-            {notice}
           </p>
         ) : null}
 
