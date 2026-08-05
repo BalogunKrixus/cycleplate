@@ -13,11 +13,16 @@ export function MemberManager({
   results,
   professionals,
   currentAdminId,
+  canGrantRoles,
 }: {
   query: string;
   results: MemberRow[];
   professionals: Profile[];
   currentAdminId: string;
+  /* Moderating and handing out privileges are different jobs, so an ordinary
+     admin sees the same list read only. Row level security says the same thing;
+     this only decides whether the controls are worth drawing. */
+  canGrantRoles: boolean;
 }) {
   const [term, setTerm] = useState(query);
   const router = useRouter();
@@ -59,6 +64,7 @@ export function MemberManager({
                 key={member.id}
                 member={member}
                 isSelf={member.id === currentAdminId}
+                canGrantRoles={canGrantRoles}
               />
             ))
           )}
@@ -68,7 +74,7 @@ export function MemberManager({
       <section>
         <h2 className="text-[20px]">Professionals</h2>
         <p className="mt-1 text-[14px] text-muted">
-          Everyone whose replies carry an expert badge.
+          Everyone whose posts and replies carry a professional badge.
         </p>
         <div className="mt-4 flex flex-col gap-3">
           {professionals.length === 0 ? (
@@ -101,9 +107,11 @@ export function MemberManager({
 function MemberCard({
   member,
   isSelf,
+  canGrantRoles,
 }: {
   member: MemberRow;
   isSelf: boolean;
+  canGrantRoles: boolean;
 }) {
   const [category, setCategory] = useState<ProfessionalCategory | "">(
     member.professional_category ?? "",
@@ -113,7 +121,7 @@ function MemberCard({
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
-  function apply(role: "member" | "professional") {
+  function apply(role: "member" | "professional" | "admin") {
     setError(null);
     startTransition(async () => {
       const result = await setMemberRole(
@@ -128,6 +136,17 @@ function MemberCard({
   }
 
   const isProfessional = member.role === "professional";
+  const isAdmin = member.role === "admin";
+
+  /* One sentence explaining why there are no buttons, or null if there are.
+     Written in order of how surprising it would be to hit each case. */
+  const locked = !canGrantRoles
+    ? "Only a super admin can change roles."
+    : isSelf
+      ? "This is you. Your own role is not editable here."
+      : member.role === "super_admin"
+        ? "Super admins are set in the database."
+        : null;
 
   return (
     <Card className="p-5">
@@ -136,76 +155,119 @@ function MemberCard({
         <div className="min-w-0 flex-1">
           <p className="text-[15px] font-medium">{member.display_name}</p>
           <p className="truncate text-[13px] text-muted">{member.email}</p>
-          <p className="mt-0.5 text-[13px] capitalize text-faint">
-            {member.role}
+          <p className="mt-0.5 text-[13px] text-faint">
+            {ROLE_LABELS[member.role]}
+            {isProfessional && member.professional_category
+              ? ` · ${categoryLabel(member)}`
+              : ""}
           </p>
         </div>
       </div>
 
-      {member.role === "admin" ? (
-        <p className="mt-4 text-[13px] text-muted">
-          {isSelf
-            ? "This is you. Change your own role in the database."
-            : "Admin accounts are managed in the database."}
-        </p>
+      {locked ? (
+        <p className="mt-4 text-[13px] text-muted">{locked}</p>
       ) : (
-        <div className="mt-4">
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="min-w-[180px] flex-1">
-              <label className="mb-1.5 block text-[13px] font-medium">
-                Replies as
-              </label>
-              <select
-                value={category}
-                onChange={(e) =>
-                  setCategory(e.target.value as ProfessionalCategory | "")
-                }
-                className="input"
+        <div className="mt-4 flex flex-col gap-4">
+          {/* Professional status and its category are one decision, so they are
+              granted together rather than as a role now and a category later
+              that somebody forgets to set. */}
+          <div>
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="min-w-[180px] flex-1">
+                <label className="mb-1.5 block text-[13px] font-medium">
+                  Posts and replies as
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) =>
+                    setCategory(e.target.value as ProfessionalCategory | "")
+                  }
+                  className="input"
+                  disabled={isAdmin}
+                >
+                  <option value="">Choose one</option>
+                  {PROFESSIONAL_CATEGORIES.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {isProfessional ? (
+                <Button
+                  variant="quiet"
+                  disabled={pending}
+                  onClick={() => apply("member")}
+                >
+                  Revoke
+                </Button>
+              ) : null}
+
+              <Button
+                disabled={pending || !category || isAdmin}
+                onClick={() => apply("professional")}
               >
-                <option value="">Choose one</option>
-                {PROFESSIONAL_CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+                {isProfessional ? "Update" : "Make professional"}
+              </Button>
             </div>
 
-            {isProfessional ? (
-              <Button
-                variant="quiet"
-                disabled={pending}
-                onClick={() => apply("member")}
-              >
-                Revoke
-              </Button>
+            {category === "other" ? (
+              <input
+                value={other}
+                onChange={(e) => setOther(e.target.value)}
+                placeholder="Their title"
+                maxLength={40}
+                className="input mt-2"
+                disabled={isAdmin}
+              />
             ) : null}
+          </div>
 
+          {/* Moderator rights are a separate line, with their own sentence,
+              because handing somebody the ability to delete other people's
+              posts should not look like picking an item from a dropdown. */}
+          <div className="rounded-card bg-bg2 p-4">
+            <p className="text-[13px] font-medium">Moderator</p>
+            <p className="mt-1 text-[13px] text-muted">
+              {isAdmin
+                ? "Can remove posts and clear flags. Cannot change anyone's role."
+                : "Lets them remove posts and clear flags across the community."}
+            </p>
             <Button
-              disabled={pending || !category}
-              onClick={() => apply("professional")}
+              variant="quiet"
+              className="mt-3"
+              disabled={pending}
+              onClick={() => apply(isAdmin ? "member" : "admin")}
             >
-              {isProfessional ? "Update" : "Make professional"}
+              {isAdmin ? "Remove moderator rights" : "Make moderator"}
             </Button>
           </div>
 
-          {category === "other" ? (
-            <input
-              value={other}
-              onChange={(e) => setOther(e.target.value)}
-              placeholder="Their title"
-              maxLength={40}
-              className="input mt-2"
-            />
-          ) : null}
-
           {error ? (
-            <p role="alert" className="mt-2 text-[13px] text-menstrual">
+            <p role="alert" className="text-[13px] text-menstrual">
               {error}
             </p>
           ) : null}
         </div>
       )}
     </Card>
+  );
+}
+
+const ROLE_LABELS: Record<MemberRow["role"], string> = {
+  member: "Member",
+  professional: "Professional",
+  admin: "Moderator",
+  super_admin: "Super admin",
+};
+
+function categoryLabel(member: MemberRow) {
+  if (member.professional_category === "other") {
+    return member.professional_category_other || "Other";
+  }
+  return (
+    PROFESSIONAL_CATEGORIES.find((c) => c.value === member.professional_category)
+      ?.label ?? member.professional_category
   );
 }

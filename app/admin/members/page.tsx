@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient, requireAdmin } from "@/lib/supabase/server";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { MemberManager } from "@/components/admin/MemberManager";
-import type { Profile } from "@/lib/types";
+import type { Profile, UserRole } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Members" };
@@ -11,7 +11,7 @@ export interface MemberRow {
   id: string;
   display_name: string;
   email: string;
-  role: "member" | "professional" | "admin";
+  role: UserRole;
   professional_category: Profile["professional_category"];
   professional_category_other: string | null;
   created_at: string;
@@ -24,6 +24,8 @@ export default async function MembersPage({
 }) {
   const admin = await requireAdmin();
   if (!admin) redirect("/admin/login");
+
+  const canGrantRoles = admin.role === "super_admin";
 
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
@@ -46,8 +48,9 @@ export default async function MembersPage({
       <AdminNav current="members" />
       <h1 className="mt-4 text-[36px] leading-tight">Members</h1>
       <p className="mt-2 text-[15px] text-muted">
-        Search by display name or email, and grant or revoke Professional
-        status.
+        {canGrantRoles
+          ? "Search by display name or email, then grant or revoke Professional status and moderator rights."
+          : "Search by display name or email. Changing roles is a super admin's job, so this list is read only for you."}
       </p>
 
       <MemberManager
@@ -55,6 +58,7 @@ export default async function MembersPage({
         results={(results ?? []) as MemberRow[]}
         professionals={(professionals ?? []) as Profile[]}
         currentAdminId={admin.id}
+        canGrantRoles={canGrantRoles}
       />
     </main>
   );
