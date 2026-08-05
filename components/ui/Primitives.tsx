@@ -74,7 +74,7 @@ export function AuthorBadge({
   category?: ProfessionalCategory | null;
   categoryOther?: string | null;
 }) {
-  if (role === "admin") {
+  if (role === "admin" || role === "super_admin") {
     return (
       <span className="inline-flex items-center rounded-chip bg-ink px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-cream">
         {ADMIN_BADGE_LABEL}
@@ -85,10 +85,10 @@ export function AuthorBadge({
   if (role === "professional") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-chip bg-expert px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
-        Expert answered
-        <span className="font-normal normal-case opacity-90">
-          {professionalLabel(category ?? null, categoryOther ?? null)}
-        </span>
+        {/* "Expert answered" reads as nonsense above a question, and this badge
+            now appears on posts as well as replies. The role is the honest
+            label in both places. */}
+        {professionalLabel(category ?? null, categoryOther ?? null)}
       </span>
     );
   }
