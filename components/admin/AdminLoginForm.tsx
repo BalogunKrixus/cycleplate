@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
+import { PasswordField } from "@/components/auth/PasswordField";
 import { Button } from "@/components/ui/Primitives";
 import { createClient } from "@/lib/supabase/client";
 
@@ -63,23 +64,13 @@ export function AdminLoginForm() {
         />
       </div>
 
-      <div>
-        <label
-          htmlFor="admin-password"
-          className="mb-1.5 block text-[14px] font-medium"
-        >
-          Password
-        </label>
-        <input
-          id="admin-password"
-          type="password"
-          required
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="input"
-        />
-      </div>
+      <PasswordField
+        id="admin-password"
+        label="Password"
+        value={password}
+        onChange={setPassword}
+        autoComplete="current-password"
+      />
 
       {error ? (
         <p role="alert" className="text-[13px] text-menstrual">
