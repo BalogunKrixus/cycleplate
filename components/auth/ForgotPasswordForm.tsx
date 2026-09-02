@@ -2,36 +2,66 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/Primitives";
 import { createClient } from "@/lib/supabase/client";
 
 /* Asking for a reset link.
  *
- * The answer is the same whether or not the address has an account. That is
- * deliberate: a form that says "no account with that email" is a way to find
- * out who is a member, and in a community about PCOS and endometriosis, being
- * able to confirm somebody is a member is not a small thing to leak.
+ * Whether the address has an account is not answered, on purpose. A form that
+ * says "no account with that email" is a way to find out who is a member, and
+ * in a community about PCOS and endometriosis, being able to confirm somebody
+ * is a member is not a small thing to leak. So the same sentence comes back
+ * either way and only the owner of the inbox learns the truth.
  *
- * So this says an email is on its way either way, and only somebody who owns
- * the inbox learns the truth.
+ * Not answering that question is not the same as pretending everything worked.
+ * Supabase refuses to send for reasons that have nothing to do with the
+ * address: its built in mailer allows only a couple of messages an hour, and a
+ * project without SMTP configured hits that immediately. Saying "check your
+ * inbox" then sends somebody to wait for an email that was never sent, and they
+ * blame themselves for mistyping their address. Those failures are reported.
  */
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  /* Set by the callback when a link did not work, which is the moment somebody
+     most needs this page and the last moment to leave them guessing why. */
+  const expired = useSearchParams().get("expired");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return;
+
+    setError(null);
     setBusy(true);
 
-    await createClient().auth.resetPasswordForEmail(email, {
-      /* Through the callback, which exchanges the one time code for a
-         session, then on to the form that needs that session in place. */
-      redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset-password`,
+    /* Trimmed because a copied address arrives with a space more often than
+       anyone expects, and lowercased because that is how Supabase stores it. */
+    const address = email.trim().toLowerCase();
+
+    const { error } = await createClient().auth.resetPasswordForEmail(address, {
+      /* Only reached if the email template still sends {{ .ConfirmationURL }}.
+         The template in docs/email-templates builds its own link that does not
+         depend on this, because that one works in any browser and this one only
+         works in the browser that asked. Kept so links already in inboxes, and
+         a project whose template has not been updated, still land somewhere
+         that can finish the job. */
+      redirectTo: `${window.location.origin}/auth/callback?next=%2Fauth%2Freset-password`,
     });
 
     setBusy(false);
+
+    if (error) {
+      setError(describe(error));
+      console.error("resetPasswordForEmail failed:", error.message);
+      return;
+    }
+
+    setEmail(address);
     setSent(true);
   }
 
@@ -43,7 +73,8 @@ export function ForgotPasswordForm() {
           <p className="mt-3 text-[16px] text-muted">
             If there is an account for{" "}
             <span className="font-medium text-ink">{email}</span>, a link to set
-            a new password is on its way. It is good for one hour.
+            a new password is on its way. It is good for one hour, and works
+            once.
           </p>
           <p className="mt-5 text-[14px] text-muted">
             Nothing after a minute? Check your spam folder, and check the address
@@ -65,6 +96,16 @@ export function ForgotPasswordForm() {
         new one.
       </p>
 
+      {expired ? (
+        <p
+          role="status"
+          className="mt-6 rounded-card bg-bg2 p-4 text-[14px] text-muted"
+        >
+          That link has expired or had already been used. Reset links last an
+          hour and work once. Ask for a fresh one below.
+        </p>
+      ) : null}
+
       <form onSubmit={submit} className="mt-8 flex flex-col gap-3">
         <div>
           <label
@@ -84,6 +125,12 @@ export function ForgotPasswordForm() {
           />
         </div>
 
+        {error ? (
+          <p role="alert" className="text-[13px] text-menstrual">
+            {error}
+          </p>
+        ) : null}
+
         <Button type="submit" disabled={busy} className="mt-2 w-full">
           {busy ? "Sending" : "Send the link"}
         </Button>
@@ -97,4 +144,26 @@ export function ForgotPasswordForm() {
       </p>
     </main>
   );
+}
+
+/* Turns a Supabase error into something worth reading, without ever answering
+   the question of whether the address has an account. Rate limits say nothing
+   about that: they are counted per project, not per address. */
+function describe(error: { message: string; status?: number }): string {
+  const message = error.message.toLowerCase();
+
+  const wait = message.match(/after (\d+) seconds?/);
+  if (wait) {
+    return `Too many requests just now. Try again in ${wait[1]} seconds.`;
+  }
+
+  if (error.status === 429 || message.includes("rate limit")) {
+    return "Too many reset emails have been sent recently. Wait a few minutes and try again.";
+  }
+
+  if (message.includes("invalid") && message.includes("email")) {
+    return "That does not look like an email address.";
+  }
+
+  return "We could not send the email just now. Please try again in a few minutes.";
 }

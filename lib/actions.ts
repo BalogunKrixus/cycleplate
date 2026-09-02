@@ -31,6 +31,12 @@ export async function createPost(
     display_name: viewer.display_name,
     body: text,
     category_slug: categorySlug,
+    /* Same reasoning as on replies. A dietitian who starts a thread should
+       carry the badge the moment it is read, and should keep it there even if
+       the status is revoked afterwards. */
+    author_role: viewer.role,
+    professional_category: viewer.professional_category,
+    professional_category_other: viewer.professional_category_other,
   });
 
   if (error) return { ok: false, error: "That did not save. Please try again." };
@@ -266,12 +272,19 @@ export async function resolveFlag(flagId: string): Promise<ActionResult> {
 
 export async function setMemberRole(
   memberId: string,
-  role: "member" | "professional",
+  role: "member" | "professional" | "admin",
   category: ProfessionalCategory | null,
   categoryOther: string | null,
 ): Promise<ActionResult> {
   const viewer = await getViewer();
-  if (viewer?.role !== "admin") return { ok: false, error: "Not allowed." };
+
+  /* Moderating and granting privileges are different jobs. An admin can remove
+     a post; only a super admin decides who else gets to. Row level security
+     says the same thing, so this is here to produce a sentence rather than a
+     database error. */
+  if (viewer?.role !== "super_admin") {
+    return { ok: false, error: "Only a super admin can change roles." };
+  }
   if (memberId === viewer.id) {
     return { ok: false, error: "You cannot change your own role here." };
   }

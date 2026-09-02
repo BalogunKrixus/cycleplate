@@ -1,4 +1,4 @@
-export type UserRole = "member" | "professional" | "admin";
+export type UserRole = "member" | "professional" | "admin" | "super_admin";
 
 export type ProfessionalCategory =
   | "nutritionist"
@@ -38,6 +38,12 @@ export interface Post {
   like_count: number;
   reply_count: number;
   created_at: string;
+  /* Snapshotted when the post is written, exactly as on replies, so revoking
+     Professional status later does not strip the badge from advice already
+     given under it. */
+  author_role: UserRole;
+  professional_category: ProfessionalCategory | null;
+  professional_category_other: string | null;
 }
 
 export interface Reply {

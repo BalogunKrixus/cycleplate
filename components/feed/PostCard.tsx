@@ -90,8 +90,15 @@ export function PostCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="text-[15px] font-medium text-ink">
-              {post.display_name}
+              {post.author_role === "admin" || post.author_role === "super_admin"
+                ? "CyclePlate"
+                : post.display_name}
             </span>
+            <AuthorBadge
+              role={post.author_role}
+              category={post.professional_category}
+              categoryOther={post.professional_category_other}
+            />
             <span className="text-[13px] text-faint">
               {timeAgo(post.created_at)}
             </span>

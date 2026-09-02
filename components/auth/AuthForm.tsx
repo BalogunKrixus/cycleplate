@@ -13,7 +13,15 @@ import { generateDisplayName } from "@/lib/displayName";
 /* Sign up assigns a handle rather than asking for one, so nobody puts their
    real name on a post about endometriosis by accident. It can be changed once
    from account settings. */
-export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
+export function AuthForm({
+  mode,
+  notice,
+}: {
+  mode: "sign-in" | "sign-up";
+  /* Set when the page was reached from a link that failed, so the reason is
+     on screen rather than left to be guessed at. */
+  notice?: string;
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -88,6 +96,15 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           ? "You post under a handle we generate for you. Your name and email are never shown."
           : "Sign in to post, reply and take part."}
       </p>
+
+      {notice ? (
+        <p
+          role="status"
+          className="mt-6 rounded-card bg-bg2 p-4 text-[14px] text-muted"
+        >
+          {notice}
+        </p>
+      ) : null}
 
       <form onSubmit={submit} className="mt-8 flex flex-col gap-3">
         <div>
