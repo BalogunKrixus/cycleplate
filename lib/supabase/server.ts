@@ -150,18 +150,3 @@ function withDeadline<T>(work: () => Promise<T>): Promise<T> {
     ),
   ]);
 }
-
-/* Runs the work, or gives up. Whichever finishes first wins; the loser is left
-   to finish on its own and be ignored, because there is nothing useful to do
-   with a Supabase answer that arrives after the page has been rendered. */
-function withDeadline<T>(work: () => Promise<T>): Promise<T> {
-  return Promise.race([
-    work(),
-    new Promise<never>((_, reject) =>
-      setTimeout(
-        () => reject(new Error(`Supabase did not answer in ${VIEWER_TIMEOUT_MS}ms`)),
-        VIEWER_TIMEOUT_MS,
-      ),
-    ),
-  ]);
-}
