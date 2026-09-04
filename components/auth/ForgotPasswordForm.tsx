@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/Primitives";
-import { createClient } from "@/lib/supabase/client";
+import { requestPasswordReset } from "@/lib/actions";
 
 /* Asking for a reset link.
  *
@@ -40,24 +40,21 @@ export function ForgotPasswordForm() {
     setBusy(true);
 
     /* Trimmed because a copied address arrives with a space more often than
-       anyone expects, and lowercased because that is how Supabase stores it. */
+       anyone expects, and lowercased because that is how Supabase stores it.
+       The action does this too; doing it here as well is what lets the
+       confirmation screen show the address the way it was actually sent. */
     const address = email.trim().toLowerCase();
 
-    const { error } = await createClient().auth.resetPasswordForEmail(address, {
-      /* Only reached if the email template still sends {{ .ConfirmationURL }}.
-         The template in docs/email-templates builds its own link that does not
-         depend on this, because that one works in any browser and this one only
-         works in the browser that asked. Kept so links already in inboxes, and
-         a project whose template has not been updated, still land somewhere
-         that can finish the job. */
-      redirectTo: `${window.location.origin}/auth/callback?next=%2Fauth%2Freset-password`,
-    });
+    /* Sent from the server rather than from here. The comment on
+       requestPasswordReset explains why that is not an arbitrary choice: asking
+       from the browser produces a link that cannot be opened on another
+       device. */
+    const result = await requestPasswordReset(address);
 
     setBusy(false);
 
-    if (error) {
-      setError(describe(error));
-      console.error("resetPasswordForEmail failed:", error.message);
+    if (!result.ok) {
+      setError(result.error);
       return;
     }
 
@@ -144,26 +141,4 @@ export function ForgotPasswordForm() {
       </p>
     </main>
   );
-}
-
-/* Turns a Supabase error into something worth reading, without ever answering
-   the question of whether the address has an account. Rate limits say nothing
-   about that: they are counted per project, not per address. */
-function describe(error: { message: string; status?: number }): string {
-  const message = error.message.toLowerCase();
-
-  const wait = message.match(/after (\d+) seconds?/);
-  if (wait) {
-    return `Too many requests just now. Try again in ${wait[1]} seconds.`;
-  }
-
-  if (error.status === 429 || message.includes("rate limit")) {
-    return "Too many reset emails have been sent recently. Wait a few minutes and try again.";
-  }
-
-  if (message.includes("invalid") && message.includes("email")) {
-    return "That does not look like an email address.";
-  }
-
-  return "We could not send the email just now. Please try again in a few minutes.";
 }

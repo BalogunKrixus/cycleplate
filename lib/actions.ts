@@ -1,12 +1,93 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { createClient as createAuthClient } from "@supabase/supabase-js";
 import { createClient, getViewer } from "@/lib/supabase/server";
+import { supabaseEnv } from "@/lib/supabase/env";
 import { POST_MAX_LENGTH, REPLY_MAX_LENGTH } from "@/lib/config";
 import { validateDisplayName } from "@/lib/displayName";
 import type { ProfessionalCategory } from "@/lib/types";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
+
+/* Asking for a password reset link.
+ *
+ * This runs on the server, and that is the whole point of it.
+ *
+ * It used to run in the browser, through the client in lib/supabase/client.ts.
+ * That client speaks PKCE, as it should for everything else, and a PKCE reset
+ * makes Supabase mint a token hash prefixed "pkce_". The emailed link then
+ * carries token_hash=pkce_… and verifyOtp cannot redeem it: a PKCE token is
+ * meant to be traded through Supabase's own verify endpoint for a code, and
+ * that code can only be exchanged by the browser holding the other half of the
+ * pair. Which is the cross-device problem the token hash link existed to solve,
+ * arriving back through the front door.
+ *
+ * A plain client on the implicit flow sends no code challenge, so the token
+ * hash comes back unprefixed and the link works wherever it is opened.
+ *
+ * The second reason is duller and nearly as useful: a failure here is now a
+ * line in the server logs rather than something only visible in the browser
+ * console of whoever it happened to.
+ *
+ * No session is involved, so this client is deliberately cookie free.
+ */
+export async function requestPasswordReset(email: string): Promise<ActionResult> {
+  const address = email.trim().toLowerCase();
+  if (!address.includes("@")) {
+    return { ok: false, error: "That does not look like an email address." };
+  }
+
+  const { url, key } = supabaseEnv();
+  const supabase = createAuthClient(url, key, {
+    auth: { flowType: "implicit", persistSession: false, autoRefreshToken: false },
+  });
+
+  /* Only reached if the email template still sends {{ .ConfirmationURL }}. The
+     template in docs/email-templates builds its own link from the Site URL and
+     ignores this. Kept so a project whose template has not been updated still
+     lands somewhere that can finish the job. */
+  const head = await headers();
+  const host = head.get("x-forwarded-host") ?? head.get("host");
+  const proto = head.get("x-forwarded-proto") ?? "https";
+
+  const { error } = await supabase.auth.resetPasswordForEmail(
+    address,
+    host
+      ? { redirectTo: `${proto}://${host}/auth/callback?next=%2Fauth%2Freset-password` }
+      : {},
+  );
+
+  if (error) {
+    console.error("requestPasswordReset failed:", error.status, error.message);
+    return { ok: false, error: describeSendFailure(error) };
+  }
+
+  /* Supabase answers the same whether or not the address has an account, and so
+     does this. A form that says "no account with that email" is a way to find
+     out who is a member, and in a community about PCOS and endometriosis that
+     is not a small thing to leak. */
+  return { ok: true };
+}
+
+/* Turns a Supabase error into something worth reading, without ever answering
+   the question of whether the address has an account. Rate limits say nothing
+   about that: they are counted per project, not per address. */
+function describeSendFailure(error: { message: string; status?: number }): string {
+  const message = error.message.toLowerCase();
+
+  const wait = message.match(/after (\d+) seconds?/);
+  if (wait) return `Too many requests just now. Try again in ${wait[1]} seconds.`;
+
+  if (error.status === 429 || message.includes("rate limit")) {
+    return "Too many reset emails have been sent recently. Wait a few minutes and try again.";
+  }
+  if (message.includes("invalid") && message.includes("email")) {
+    return "That does not look like an email address.";
+  }
+  return "We could not send the email just now. Please try again in a few minutes.";
+}
 
 /* Row level security is the real gate. These checks exist so a member gets a
    sentence explaining what went wrong rather than an opaque database error. */
