@@ -14,6 +14,7 @@ import {
   timeAgo,
 } from "@/components/ui/Primitives";
 import { setPinned, softDelete } from "@/lib/actions";
+import { isModerator } from "@/lib/roles";
 import type { Category, FeedPost, FeedReply, Profile } from "@/lib/types";
 
 export function PostCard({
@@ -34,7 +35,7 @@ export function PostCard({
   const router = useRouter();
 
   const category = categories.find((c) => c.slug === post.category_slug);
-  const isAdmin = viewer?.role === "admin";
+  const isAdmin = isModerator(viewer);
 
   /* Replies load on expand rather than with the feed. Most posts are never
      opened, and loading every thread up front would make the feed pay for it. */

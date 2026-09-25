@@ -16,10 +16,20 @@ import { getViewer } from "@/lib/supabase/server";
  * away two applications wearing the same paint.
  */
 
+/* Labels are named for what is on the other side of them, which sounds obvious
+ * and was not true here. "Community" pointed at the page that *explains* the
+ * community, while the button beside it pointed at the community itself, so two
+ * controls a centimetre apart made the same promise and kept it differently.
+ * The page is an explainer, so it says so, and "Go to community" is left as the
+ * only thing in the header that claims to be the door.
+ *
+ * "About" is left alone on purpose. It is the page about CyclePlate — the
+ * company, what it believes, why it exists — so calling it "About Community"
+ * would have fixed one mislabelled link by creating another. */
 const PAGES = [
   ["The Science", "/science"],
-  ["Community", "/community"],
-  ["Journal", "/journal"],
+  ["About Community", "/community"],
+  ["Insights", "/insights"],
   ["Partners", "/partners"],
   ["About", "/about"],
 ] as const;

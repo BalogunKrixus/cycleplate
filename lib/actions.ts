@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { createClient as createAuthClient } from "@supabase/supabase-js";
 import { createClient, getViewer } from "@/lib/supabase/server";
+import { isModerator, isSuperAdmin } from "@/lib/roles";
 import { supabaseEnv } from "@/lib/supabase/env";
 import { POST_MAX_LENGTH, REPLY_MAX_LENGTH } from "@/lib/config";
 import { validateDisplayName } from "@/lib/displayName";
@@ -122,7 +123,7 @@ export async function createPost(
 
   if (error) return { ok: false, error: "That did not save. Please try again." };
 
-  revalidatePath("/community");
+  revalidatePath("/app");
   return { ok: true };
 }
 
@@ -184,7 +185,7 @@ export async function createReply(
 
   if (error) return { ok: false, error: "That did not save. Please try again." };
 
-  revalidatePath("/community");
+  revalidatePath("/app");
   revalidatePath(`/post/${postId}`);
   return { ok: true };
 }
@@ -272,7 +273,9 @@ export async function softDelete(
   targetId: string,
 ): Promise<ActionResult> {
   const viewer = await getViewer();
-  if (viewer?.role !== "admin") return { ok: false, error: "Not allowed." };
+  if (!viewer || !isModerator(viewer)) {
+    return { ok: false, error: "Not allowed." };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -286,7 +289,7 @@ export async function softDelete(
 
   if (error) return { ok: false, error: "That did not save." };
 
-  revalidatePath("/community");
+  revalidatePath("/app");
   revalidatePath("/admin");
   return { ok: true };
 }
@@ -296,7 +299,9 @@ export async function restoreContent(
   targetId: string,
 ): Promise<ActionResult> {
   const viewer = await getViewer();
-  if (viewer?.role !== "admin") return { ok: false, error: "Not allowed." };
+  if (!viewer || !isModerator(viewer)) {
+    return { ok: false, error: "Not allowed." };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -306,7 +311,7 @@ export async function restoreContent(
 
   if (error) return { ok: false, error: "That did not save." };
 
-  revalidatePath("/community");
+  revalidatePath("/app");
   revalidatePath("/admin");
   return { ok: true };
 }
@@ -316,7 +321,9 @@ export async function setPinned(
   pinned: boolean,
 ): Promise<ActionResult> {
   const viewer = await getViewer();
-  if (viewer?.role !== "admin") return { ok: false, error: "Not allowed." };
+  if (!viewer || !isModerator(viewer)) {
+    return { ok: false, error: "Not allowed." };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -326,14 +333,16 @@ export async function setPinned(
 
   if (error) return { ok: false, error: "That did not save." };
 
-  revalidatePath("/community");
+  revalidatePath("/app");
   revalidatePath("/admin");
   return { ok: true };
 }
 
 export async function resolveFlag(flagId: string): Promise<ActionResult> {
   const viewer = await getViewer();
-  if (viewer?.role !== "admin") return { ok: false, error: "Not allowed." };
+  if (!viewer || !isModerator(viewer)) {
+    return { ok: false, error: "Not allowed." };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -363,7 +372,7 @@ export async function setMemberRole(
      a post; only a super admin decides who else gets to. Row level security
      says the same thing, so this is here to produce a sentence rather than a
      database error. */
-  if (viewer?.role !== "super_admin") {
+  if (!viewer || !isSuperAdmin(viewer)) {
     return { ok: false, error: "Only a super admin can change roles." };
   }
   if (memberId === viewer.id) {

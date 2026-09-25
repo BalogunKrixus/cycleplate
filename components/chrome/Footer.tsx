@@ -95,7 +95,7 @@ export function Footer() {
                 <Link href="/community">Community</Link>
               </li>
               <li>
-                <Link href="/journal">Journal</Link>
+                <Link href="/insights">Insights</Link>
               </li>
             </ul>
           </div>

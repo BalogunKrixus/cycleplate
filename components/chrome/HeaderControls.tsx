@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { Avatar } from "@/components/ui/Primitives";
+import { isModerator } from "@/lib/roles";
 import type { Profile } from "@/lib/types";
 
 /* The interactive half of the header: navigation, the theme toggle, the mobile
@@ -15,6 +16,20 @@ import type { Profile } from "@/lib/types";
  * rather than a data-page attribute set by hand on every page, which is one
  * fewer thing to forget when a page is added.
  */
+/* One call to action, worded the same whoever is reading it.
+ *
+ * It used to say "Join the community" to a visitor and "Go to community" to a
+ * member, which is defensible and was still wrong: the button is the way in to
+ * the same place either way, and changing its name means the thing somebody was
+ * told to look for is not there the next time they look. Only the destination
+ * changes, and it changes to where they would have been sent anyway — /app
+ * bounces a signed out visitor to /join, so pointing there directly saves a
+ * redirect rather than deciding anything. */
+const COMMUNITY = {
+  label: "Go to Community",
+  href: (viewer: Profile | null) => (viewer ? "/app" : "/join"),
+};
+
 export function HeaderControls({
   pages,
   viewer,
@@ -66,29 +81,26 @@ export function HeaderControls({
         {/* The old stylesheet hid the header button below 760px, which left a
             phone with no way into the community from the header at all. These
             repeat it inside the menu, where there is room for it. */}
+        <Link href={COMMUNITY.href(viewer)} className="nav-only-mobile">
+          {COMMUNITY.label}
+        </Link>
+
         {viewer ? (
           <>
-            <Link href="/app" className="nav-only-mobile">
-              Go to community
-            </Link>
             <Link href="/account" className="nav-only-mobile">
               {viewer.display_name}
             </Link>
-            {viewer.role === "admin" ? (
+            {isModerator(viewer) ? (
               <Link href="/admin" className="nav-only-mobile">
                 Admin
               </Link>
             ) : null}
           </>
-        ) : (
-          <Link href="/join" className="nav-only-mobile">
-            Join the community
-          </Link>
-        )}
+        ) : null}
       </nav>
 
       <div className="nav-cta">
-        {viewer?.role === "admin" ? (
+        {isModerator(viewer) ? (
           <Link href="/admin" className="nav-admin">
             Admin
           </Link>
@@ -127,15 +139,9 @@ export function HeaderControls({
           </svg>
         </button>
 
-        {viewer ? (
-          <Link href="/app" className="btn btn-primary">
-            Go to community
-          </Link>
-        ) : (
-          <Link href="/join" className="btn btn-primary">
-            Join the community
-          </Link>
-        )}
+        <Link href={COMMUNITY.href(viewer)} className="btn btn-primary">
+          {COMMUNITY.label}
+        </Link>
 
         <button
           className="nav-burger"

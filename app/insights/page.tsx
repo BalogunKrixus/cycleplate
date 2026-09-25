@@ -1,18 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { JournalCard } from "@/components/marketing/JournalCard";
+import { InsightCard } from "@/components/marketing/InsightCard";
 import { Reveal } from "@/components/marketing/Reveal";
 
 export const metadata = {
-  title: "Journal",
+  title: "Insights",
   description:
     "Long-form, carefully sourced reads on the conditions and questions women live with, with every claim traced back to its source.",
 };
 
 const ARTICLES = [
   {
-    href: "/journal/pcos",
+    href: "/insights/pcos",
     photo: "/photos/buddha-bowl.jpg",
     alt: "A colourful low-GI bowl of food",
     tag: "PCOS",
@@ -21,7 +21,7 @@ const ARTICLES = [
     read: "Read →",
   },
   {
-    href: "/journal/endometriosis",
+    href: "/insights/endometriosis",
     photo: "/photos/seafood-pasta.jpg",
     alt: "An omega-3 rich seafood dish",
     tag: "Endometriosis",
@@ -30,7 +30,7 @@ const ARTICLES = [
     read: "Read →",
   },
   {
-    href: "/journal/pms",
+    href: "/insights/pms",
     photo: "/photos/breakfast-smile.jpg",
     alt: "A woman enjoying a calm breakfast",
     tag: "PMS & mood",
@@ -40,12 +40,12 @@ const ARTICLES = [
   },
 ];
 
-export default function JournalPage() {
+export default function InsightsPage() {
   return (
     <main>
       <section className="band" style={{ paddingBottom: 40 }}>
         <div className="wrap" style={{ maxWidth: 820 }}>
-          <p className="eyebrow">Journal</p>
+          <p className="eyebrow">Insights</p>
           <h1>The science of your cycle, written for you.</h1>
           <p className="lede" style={{ maxWidth: "none" }}>
             Long-form, carefully sourced reads on the conditions and questions
@@ -61,7 +61,7 @@ export default function JournalPage() {
           <Reveal>
             <Link
               className="jr-card jr-feature"
-              href="/journal/period-pain"
+              href="/insights/period-pain"
             >
               <div className="jr-photo">
                 <Image
@@ -93,10 +93,10 @@ export default function JournalPage() {
 
       <section className="band alt">
         <div className="wrap">
-          <h2>More from the journal</h2>
+          <h2>More from Insights</h2>
           <div className="jr-grid">
             {ARTICLES.map((article) => (
-              <JournalCard key={article.href} {...article} />
+              <InsightCard key={article.href} {...article} />
             ))}
           </div>
         </div>
@@ -106,7 +106,7 @@ export default function JournalPage() {
         <div className="wrap" style={{ maxWidth: 640, textAlign: "center" }}>
           <h2>New articles, as they land</h2>
           <p className="lede" style={{ margin: "0 auto" }}>
-            Join the newsletter and get each new journal piece in your inbox,
+            Join the newsletter and get each new Insights piece in your inbox,
             sourced and plain-spoken.
           </p>
           <div

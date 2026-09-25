@@ -43,7 +43,7 @@ function useReveal() {
 /* The hook, for when the element being revealed has to stay exactly where it is
  * in the tree. A grid lays out its direct children, so wrapping a card in a
  * spare div hands the layout to the div and leaves the card sitting at its own
- * content height inside a stretched box. On the journal cards that showed up as
+ * content height inside a stretched box. On the Insights cards that showed up as
  * two of the three no longer reaching the bottom of the row.
  */
 export { useReveal };
