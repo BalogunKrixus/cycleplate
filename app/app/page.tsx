@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createClient, getViewer } from "@/lib/supabase/server";
@@ -12,6 +11,9 @@ import {
   SearchBar,
 } from "@/components/feed/FeedChrome";
 import { ShareSomething } from "@/components/post/ShareSomething";
+import { ComposerPrompt } from "@/components/post/ComposerPrompt";
+import { CommunityHeader } from "@/components/feed/CommunityHeader";
+import { CommunityAside } from "@/components/feed/CommunityAside";
 import type { Category, FeedPost, FeedReply, Post, Reply } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -57,13 +59,38 @@ export default async function CommunityPage({
   /* The chips and the posts have nothing to say to each other, so they are
      fetched together rather than one after the other. Every await here is a
      round trip to a database in another country, and they were queueing. */
-  const [{ data: categoryRows }, { data: postRows }] = await Promise.all([
+  /* A week ago, for the activity count. */
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  /* The three counts are head requests: they ask Postgres for a number and
+     carry no rows back. They are in this Promise.all rather than after it
+     because none of them depends on the feed, so in wall clock time they cost
+     nothing beyond the slowest query already being made -- which matters, since
+     the database is in Ireland and every sequential await here is another
+     round trip across an ocean. */
+  const [
+    { data: categoryRows },
+    { data: postRows },
+    { count: memberCount },
+    { count: weekCount },
+    { count: professionalCount },
+  ] = await Promise.all([
     supabase
       .from("categories")
       .select("*")
       .eq("is_active", true)
       .order("sort_order"),
     postQuery,
+    supabase.from("profiles").select("id", { count: "exact", head: true }),
+    supabase
+      .from("posts")
+      .select("id", { count: "exact", head: true })
+      .eq("is_deleted", false)
+      .gte("created_at", weekAgo),
+    supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "professional"),
   ]);
 
   const categories = (categoryRows ?? []) as Category[];
@@ -136,67 +163,77 @@ export default async function CommunityPage({
   }));
 
   return (
-    /* The feed is a narrow column on purpose: a paragraph somebody typed on a
-       phone should not stretch the width of a desktop. Sign in, account and
-       admin used to live in a second nav here, which is exactly the seam that
-       made the community look like a separate site. The site header carries
-       them now, on every page. */
-    <main className="mx-auto w-full max-w-2xl px-5 pb-32 pt-10 sm:pt-14">
-      <header className="mb-7">
-        <h1 className="text-[40px] leading-none sm:text-[52px]">Community</h1>
-        <p className="mt-3 max-w-[46ch] text-[16px] text-muted">
-          Anonymous by default. Moderated with love. You are posting as{" "}
-          <Link href="/account" className="font-medium text-ink underline">
-            {viewer.display_name}
-          </Link>
-          .
-        </p>
-      </header>
+    /* Feed and context, side by side above lg.
+     *
+     * The feed column stays narrow. That was a deliberate decision before this
+     * change and it survives it: a paragraph typed on a phone should not
+     * stretch the width of a desktop monitor. What was wrong was not the
+     * column, it was that everything either side of it was empty margin on a
+     * wide screen, which is what made a room full of people feel like a
+     * document. The aside fills one side with context and leaves the writing
+     * the width it was set at. */
+    <div className="mx-auto flex w-full max-w-5xl justify-center gap-8 px-5 pb-32 pt-8 sm:pt-12">
+      <main className="w-full max-w-2xl">
+        <CommunityHeader
+          members={memberCount ?? 0}
+          postsThisWeek={weekCount ?? 0}
+          professionals={professionalCount ?? 0}
+        />
 
-      <div className="mb-5">
-        <GuidelinesBanner />
-      </div>
+        {/* Below lg the aside is gone, so the rules it carries would go with
+            it. The banner stays for the narrow case and is still dismissible. */}
+        <div className="mb-4 lg:hidden">
+          <GuidelinesBanner />
+        </div>
 
-      <div className="mb-4">
-        <Suspense fallback={<div className="h-12" />}>
-          <SearchBar initial={query} />
-        </Suspense>
-      </div>
+        <ComposerPrompt viewer={viewer} />
 
-      <div className="mb-6">
-        <Suspense fallback={<div className="h-10" />}>
-          <CategoryChips categories={categories} active={activeCategory} />
-        </Suspense>
-      </div>
+        <div className="mb-3">
+          <Suspense fallback={<div className="h-12" />}>
+            <SearchBar initial={query} />
+          </Suspense>
+        </div>
 
-      {query ? (
-        <p className="mb-4 text-[14px] text-muted">
-          {feed.length === 0
-            ? `Nothing found for "${query}"`
-            : `${feed.length} result${feed.length === 1 ? "" : "s"} for "${query}"`}
-        </p>
-      ) : null}
+        <div className="mb-5">
+          <Suspense fallback={<div className="h-10" />}>
+            <CategoryChips categories={categories} active={activeCategory} />
+          </Suspense>
+        </div>
 
-      <div className="flex flex-col gap-4">
-        {feed.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            categories={categories}
-            viewer={viewer}
-          />
-        ))}
-
-        {feed.length === 0 && !query ? (
-          <EmptyFeed
-            signedIn
-            categories={categories}
-            filtered={!!activeCategory}
-          />
+        {query ? (
+          <p className="mb-4 text-[14px] text-muted">
+            {feed.length === 0
+              ? `Nothing found for "${query}"`
+              : `${feed.length} result${feed.length === 1 ? "" : "s"} for "${query}"`}
+          </p>
         ) : null}
-      </div>
+
+        <div className="flex flex-col gap-4">
+          {feed.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              categories={categories}
+              viewer={viewer}
+            />
+          ))}
+
+          {feed.length === 0 && !query ? (
+            <EmptyFeed
+              signedIn
+              categories={categories}
+              filtered={!!activeCategory}
+            />
+          ) : null}
+        </div>
+      </main>
+
+      <CommunityAside
+        categories={categories}
+        professionals={professionalCount ?? 0}
+      />
 
       <ShareSomething categories={categories} viewer={viewer} />
-    </main>
+    </div>
   );
 }

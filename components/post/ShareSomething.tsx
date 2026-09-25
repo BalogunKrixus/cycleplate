@@ -7,8 +7,16 @@ import { Button } from "@/components/ui/Primitives";
 import { POST_MAX_LENGTH } from "@/lib/config";
 import type { Category, Profile } from "@/lib/types";
 
-/* The floating pill and its modal. Visitors see the button too: hiding it would
-   mean nobody discovers they can take part until they happen to sign up. */
+/* The composer modal, and the floating pill that is now its second way in.
+ *
+ * The pill used to be the only way in. It is still useful -- once you have
+ * scrolled through a dozen posts, the box at the top of the feed is a long way
+ * back -- but it is no longer the thing that has to teach you that you can
+ * post, so it stays out of the way until the box it duplicates has scrolled
+ * off. Two identical invitations a thumb apart is not twice the invitation.
+ *
+ * Visitors see it too: hiding it would mean nobody discovers they can take part
+ * until they happen to sign up. */
 export function ShareSomething({
   categories,
   viewer,
@@ -21,7 +29,21 @@ export function ShareSomething({
   const [category, setCategory] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
+
+  /* The pill appears once the inline box is plausibly off screen. A scroll
+     listener rather than an observer on the box itself: the box lives in a
+     different part of the tree, and one number read from a passive listener is
+     cheaper than threading a ref through a server component to reach it. */
+  useEffect(() => {
+    function onScroll() {
+      setScrolled(window.scrollY > 260);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -86,8 +108,15 @@ export function ShareSomething({
            not returning, they are arriving. Sign in was the wrong door to hold
            open for them. */
         onClick={() => (viewer ? setOpen(true) : router.push("/join"))}
-        className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-chip bg-ink px-5 py-3.5
-                   text-[15px] font-medium text-cream shadow-lift transition hover:-translate-y-0.5"
+        aria-hidden={!scrolled}
+        tabIndex={scrolled ? undefined : -1}
+        className={`fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-chip bg-ink px-5 py-3.5
+                    text-[15px] font-medium text-cream shadow-lift transition
+                    hover:-translate-y-0.5 ${
+                      scrolled
+                        ? "pointer-events-auto translate-y-0 opacity-100"
+                        : "pointer-events-none translate-y-3 opacity-0"
+                    }`}
       >
         <svg
           width="17"
@@ -108,7 +137,7 @@ export function ShareSomething({
 
       {open ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/25 p-4 sm:items-center"
+          className="modal-scrim fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
           role="dialog"
           aria-modal="true"
           aria-label="Share something with the community"

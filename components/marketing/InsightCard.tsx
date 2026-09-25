@@ -5,13 +5,13 @@ import Link from "next/link";
 
 import { useReveal } from "@/components/marketing/Reveal";
 
-/* A card in the three-across journal and signpost grids.
+/* A card in the three-across Insights and signpost grids.
  *
  * It reveals itself rather than being wrapped in a Reveal, so the card stays a
  * direct child of the grid and stretches to the height of the tallest in the
  * row. Wrapping it was enough to leave two of three cards short.
  */
-export function JournalCard({
+export function InsightCard({
   href,
   photo,
   alt,

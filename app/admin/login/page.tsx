@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isModerator } from "@/lib/roles";
 import { redirect } from "next/navigation";
 
 import { AdminLoginForm } from "@/components/admin/AdminLoginForm";
@@ -23,7 +24,7 @@ export const metadata = { title: "Team sign in" };
 export default async function AdminLoginPage() {
   const viewer = await getViewer();
 
-  if (viewer?.role === "admin") redirect("/admin");
+  if (isModerator(viewer)) redirect("/admin");
 
   return (
     <main className="mx-auto w-full max-w-md px-5 py-20 sm:py-28">

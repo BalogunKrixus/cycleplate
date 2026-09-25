@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { Photo } from "@/components/marketing/Photo";
 
-/* The shell every journal article shares: the hero, the lead photo, the
+/* The shell every Insights article shares: the hero, the lead photo, the
  * references, and the invitation at the end.
  *
  * All four articles repeated this markup, so a change to the byline row or the
@@ -51,8 +51,8 @@ export function ArticleLayout({
         <section className="band" style={{ paddingBottom: 32 }}>
           <div className="wrap">
             <div className="article-hero">
-              <Link href="/journal" className="back-link">
-                ← Back to the journal
+              <Link href="/insights" className="back-link">
+                ← Back to Insights
               </Link>
               <p className="eyebrow">{eyebrow}</p>
               <h1>{title}</h1>
@@ -120,7 +120,7 @@ export function ArticleLayout({
             <Link href="/join" className="btn btn-primary">
               Join the community
             </Link>
-            <Link href="/journal" className="btn btn-quiet">
+            <Link href="/insights" className="btn btn-quiet">
               More articles
             </Link>
           </div>

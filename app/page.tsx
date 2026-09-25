@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Chart } from "@/components/marketing/Chart";
-import { JournalCard } from "@/components/marketing/JournalCard";
+import { InsightCard } from "@/components/marketing/InsightCard";
 import { Reveal } from "@/components/marketing/Reveal";
 import { SubscribeForm } from "@/components/marketing/SubscribeForm";
 import { Photo } from "@/components/marketing/Photo";
@@ -102,13 +102,13 @@ const ROUTES = [
     read: "Join the conversation →",
   },
   {
-    href: "/journal",
+    href: "/insights",
     photo: "/photos/breakfast-smile.jpg",
     alt: "A woman enjoying a calm breakfast",
-    tag: "Journal",
+    tag: "Insights",
     title: "Deep, sourced reads",
     body: "Long-form articles on period pain, PCOS, endometriosis and PMS, each one grounded in the evidence.",
-    read: "Read the journal →",
+    read: "Read Insights →",
   },
 ];
 
@@ -291,7 +291,7 @@ export default function HomePage() {
           </h2>
           <div className="jr-grid">
             {ROUTES.map((r) => (
-              <JournalCard key={r.href} {...r} />
+              <InsightCard key={r.href} {...r} />
             ))}
           </div>
         </div>
@@ -370,7 +370,7 @@ export default function HomePage() {
           <h2>Science-backed cycle nutrition, in your inbox</h2>
           <p className="lede" style={{ margin: "0 auto" }}>
             Join our newsletter for sourced, practical guidance on eating for your
-            cycle, plus new journal articles as they land. No noise, no selling.
+            cycle, plus new Insights articles as they land. No noise, no selling.
           </p>
           <div style={{ marginTop: 36, textAlign: "left" }}>
             <SubscribeForm kind="newsletter" submitLabel="Subscribe">

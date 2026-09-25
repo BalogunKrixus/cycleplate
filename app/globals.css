@@ -15,8 +15,8 @@
  * accent here changes it everywhere, which is the whole point of merging the two
  * applications.
  */
-:root{--bg:#FAF6EF;--bg2:#F2ECDF;--card:#FFFCF5;--ink:#2A1F17;--ink2:#6B5D4F;--accent:#C15A3D;--accent-ink:#FFF8F0;--sh:0 2px 8px rgba(42,31,23,.04);--sh-lg:0 4px 12px rgba(42,31,23,.06);--menstrual:#B23A4B;--follicular:#7C9A65;--ovulatory:#E0A33E;--luteal:#96617F}
-[data-theme="dark"]{--bg:#1F1712;--bg2:#2A211A;--card:#2E241C;--ink:#F5EFE4;--ink2:#B5A99A;--accent:#D77557;--accent-ink:#241108;--sh:0 2px 10px rgba(0,0,0,.20);--sh-lg:0 4px 16px rgba(0,0,0,.25);--menstrual:#D4677A;--follicular:#9DBB85;--ovulatory:#E8B65F;--luteal:#B583A3}
+:root{--bg:#FAF6EF;--bg2:#F2ECDF;--card:#FFFCF5;--ink:#2A1F17;--ink2:#6B5D4F;--accent:#C15A3D;--accent-ink:#FFF8F0;--sh:0 2px 8px rgba(42,31,23,.04);--sh-lg:0 4px 12px rgba(42,31,23,.06);--menstrual:#B23A4B;--follicular:#7C9A65;--ovulatory:#E0A33E;--luteal:#96617F;--search:#FFFFFF;--hairline:rgba(42,31,23,.10);--hairline-strong:rgba(42,31,23,.18);--scrim:rgba(26,18,12,.72)}
+[data-theme="dark"]{--bg:#1F1712;--bg2:#2A211A;--card:#2E241C;--ink:#F5EFE4;--ink2:#B5A99A;--accent:#D77557;--accent-ink:#241108;--sh:0 2px 10px rgba(0,0,0,.20);--sh-lg:0 4px 16px rgba(0,0,0,.25);--menstrual:#D4677A;--follicular:#9DBB85;--ovulatory:#E8B65F;--luteal:#B583A3;--search:#3A2E24;--hairline:rgba(245,239,228,.14);--hairline-strong:rgba(245,239,228,.26);--scrim:rgba(0,0,0,.68)}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:17px;line-height:1.65;transition:background .3s,color .3s;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
@@ -159,7 +159,8 @@ footer{background:var(--bg2);padding:72px 0 36px;margin-top:0}
 .refs ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:12px}
 .refs li{font-size:13.5px;color:var(--ink2);line-height:1.55}
 .refs a{word-break:break-word}
-/* journal cards */
+/* Insights cards. The .jr- prefix is left alone: it is a class name, not a
+   label, and renaming it would touch every article for no one's benefit. */
 .jr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:48px}
 @media (max-width:920px){.jr-grid{grid-template-columns:1fr 1fr}}
 @media (max-width:600px){.jr-grid{grid-template-columns:1fr}}
@@ -235,7 +236,7 @@ footer{background:var(--bg2);padding:72px 0 36px;margin-top:0}
   }
 }
 
-/* The wide featured card at the top of the journal: photo beside the text
+/* The wide featured card at the top of Insights: photo beside the text
    rather than above it. Was an inline style on the anchor, which meant it had
    no way to collapse on a narrow screen. It does now. */
 .jr-feature {
@@ -445,6 +446,76 @@ footer{background:var(--bg2);padding:72px 0 36px;margin-top:0}
 
   textarea.input {
     resize: vertical;
+  }
+
+  /* The community search field.
+   *
+   * .input paints itself var(--card), which is #FFFCF5 against a page of
+   * #FAF6EF. Two percent apart. On a card that is the intention — the whole
+   * design separates surfaces with shadow rather than contrast — but a thing
+   * you are meant to type into has to look like a thing you can type into, and
+   * at that distance it read as a shadow floating on the background with no box
+   * inside it. So this one control opts out of the soft treatment: a genuinely
+   * lighter surface, and a hairline drawn as an inset shadow rather than a
+   * border, which keeps it inside the shadow scale the rest of the site uses.
+   *
+   * appearance:none is not cosmetic here. Safari, on iOS especially, gives
+   * input[type=search] its own native chrome and quietly refuses the radius and
+   * the background, which is the other half of why this field looked unlike
+   * every other input on the site. */
+  .input-search {
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--search);
+    box-shadow:
+      inset 0 0 0 1px var(--hairline),
+      var(--sh);
+  }
+
+  .input-search:focus {
+    box-shadow:
+      0 0 0 2px var(--accent),
+      var(--sh);
+  }
+
+  /* Safari draws its own clear button on top of the spinner otherwise. */
+  .input-search::-webkit-search-decoration,
+  .input-search::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
+
+  /* An unselected category chip had the same problem in a smaller box: surface
+     on background, near enough invisible, so a row of filters read as a row of
+     nothing. Same answer, so that the chips and the field they sit under look
+     like they belong to each other. */
+  .chip-idle {
+    background: var(--search);
+    box-shadow:
+      inset 0 0 0 1px var(--hairline),
+      var(--sh);
+  }
+
+  .chip-idle:hover {
+    box-shadow:
+      inset 0 0 0 1px var(--hairline-strong),
+      var(--sh-lg);
+  }
+
+  /* The dim behind a modal.
+   *
+   * It used to be bg-ink/25, which is a text colour at a quarter strength. In
+   * the light theme that is a faint brown haze; in the dark theme --ink is
+   * #F5EFE4, so the scrim was a pale wash *lightening* the page behind the
+   * dialog rather than dimming it. A scrim is its own idea and gets its own
+   * token, dark in both themes, because its job is to put everything behind
+   * the dialog out of reach rather than to tint it.
+   *
+   * The blur is what makes a half transparent panel readable over a page of
+   * text, and it degrades to plain dimming where it is unsupported. */
+  .modal-scrim {
+    background: var(--scrim);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
   }
 }
 

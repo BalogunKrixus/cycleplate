@@ -13,15 +13,25 @@ const REDIRECTS = [
   ["/index.html", "/"],
   ["/about.html", "/about"],
   ["/science.html", "/science"],
-  ["/journal.html", "/journal"],
-  ["/journal-pcos.html", "/journal/pcos"],
-  ["/journal-endometriosis.html", "/journal/endometriosis"],
-  ["/journal-period-pain.html", "/journal/period-pain"],
-  ["/journal-pms.html", "/journal/pms"],
+  ["/journal.html", "/insights"],
+  ["/journal-pcos.html", "/insights/pcos"],
+  ["/journal-endometriosis.html", "/insights/endometriosis"],
+  ["/journal-period-pain.html", "/insights/period-pain"],
+  ["/journal-pms.html", "/insights/pms"],
   ["/partners.html", "/partners"],
   ["/privacy.html", "/privacy"],
   ["/terms.html", "/terms"],
   ["/community.html", "/community"],
+
+  /* The journal became Insights. These are not legacy .html addresses, they are
+     the live ones from yesterday: linked from the newsletter, shared, and the
+     pages search actually has indexed. A permanent redirect is what hands the
+     ranking to the new address instead of starting the section from zero. */
+  ["/journal", "/insights"],
+  ["/journal/pcos", "/insights/pcos"],
+  ["/journal/endometriosis", "/insights/endometriosis"],
+  ["/journal/period-pain", "/insights/period-pain"],
+  ["/journal/pms", "/insights/pms"],
 ];
 
 const nextConfig = {

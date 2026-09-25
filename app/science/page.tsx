@@ -237,8 +237,8 @@ export default function SciencePage() {
             <Link href="/join" className="btn btn-primary">
               Join the community
             </Link>
-            <Link href="/journal" className="btn btn-quiet">
-              Read the journal
+            <Link href="/insights" className="btn btn-quiet">
+              Read Insights
             </Link>
           </div>
         </div>
