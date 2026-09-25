@@ -15,8 +15,8 @@
  * accent here changes it everywhere, which is the whole point of merging the two
  * applications.
  */
-:root{--bg:#FAF6EF;--bg2:#F2ECDF;--card:#FFFCF5;--ink:#2A1F17;--ink2:#6B5D4F;--accent:#C15A3D;--accent-ink:#FFF8F0;--sh:0 2px 8px rgba(42,31,23,.04);--sh-lg:0 4px 12px rgba(42,31,23,.06);--menstrual:#B23A4B;--follicular:#7C9A65;--ovulatory:#E0A33E;--luteal:#96617F;--search:#FFFFFF;--hairline:rgba(42,31,23,.10);--hairline-strong:rgba(42,31,23,.18);--scrim:rgba(26,18,12,.72)}
-[data-theme="dark"]{--bg:#1F1712;--bg2:#2A211A;--card:#2E241C;--ink:#F5EFE4;--ink2:#B5A99A;--accent:#D77557;--accent-ink:#241108;--sh:0 2px 10px rgba(0,0,0,.20);--sh-lg:0 4px 16px rgba(0,0,0,.25);--menstrual:#D4677A;--follicular:#9DBB85;--ovulatory:#E8B65F;--luteal:#B583A3;--search:#3A2E24;--hairline:rgba(245,239,228,.14);--hairline-strong:rgba(245,239,228,.26);--scrim:rgba(0,0,0,.68)}
+:root{--bg:#FAF6EF;--bg2:#F2ECDF;--card:#FFFCF5;--ink:#2A1F17;--ink2:#6B5D4F;--accent:#C15A3D;--accent-ink:#FFF8F0;--sh:0 2px 8px rgba(42,31,23,.04);--sh-lg:0 4px 12px rgba(42,31,23,.06);--menstrual:#B23A4B;--follicular:#7C9A65;--ovulatory:#E0A33E;--luteal:#96617F;--field:#FFFFFF;--line:rgba(42,31,23,.12);--line-strong:rgba(42,31,23,.22);--accent-halo:rgba(193,90,61,.18);--scrim:rgba(26,18,12,.72)}
+[data-theme="dark"]{--bg:#1F1712;--bg2:#2A211A;--card:#2E241C;--ink:#F5EFE4;--ink2:#B5A99A;--accent:#D77557;--accent-ink:#241108;--sh:0 2px 10px rgba(0,0,0,.20);--sh-lg:0 4px 16px rgba(0,0,0,.25);--menstrual:#D4677A;--follicular:#9DBB85;--ovulatory:#E8B65F;--luteal:#B583A3;--field:#332822;--line:rgba(245,239,228,.14);--line-strong:rgba(245,239,228,.28);--accent-halo:rgba(215,117,87,.22);--scrim:rgba(0,0,0,.68)}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:17px;line-height:1.65;transition:background .3s,color .3s;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
@@ -43,7 +43,7 @@ img{max-width:100%;display:block}
 [data-theme="dark"] .btn-primary:hover{color:#241108}
 .btn-quiet{background:var(--bg2);color:var(--ink)}
 [data-theme="dark"] .btn-quiet{background:var(--card)}
-.btn-quiet:hover{box-shadow:var(--sh);color:var(--ink)}
+.btn-quiet:hover{background:var(--card);box-shadow:0 0 0 1px var(--line);color:var(--ink)}
 .band.alt .btn-quiet{background:var(--bg)}
 /* nav */
 .nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);transition:background .3s}
@@ -62,7 +62,7 @@ img{max-width:100%;display:block}
 .cp-lock-h{display:inline-flex;align-items:center}
 .cp-lock-v{display:inline-flex;flex-direction:column;align-items:center;gap:.34em}
 /* cards — no borders, shadow only */
-.card{background:var(--card);border-radius:22px;box-shadow:var(--sh);padding:32px}
+.card{background:var(--card);border-radius:22px;box-shadow:0 0 0 1px var(--line);padding:32px}
 /* stat rows */
 .stat-row{display:flex;flex-wrap:wrap;gap:48px 64px;align-items:baseline}
 .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:56px 48px}
@@ -75,14 +75,22 @@ img{max-width:100%;display:block}
 .field{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
 .field label{font-size:14px;font-weight:600}
 .field .opt{font-weight:400;color:var(--ink2)}
-input[type="text"],input[type="email"],select,textarea{font-family:inherit;font-size:16px;color:var(--ink);background:var(--card);border:none;border-radius:14px;padding:14px 18px;box-shadow:var(--sh);outline:none;width:100%;transition:box-shadow .2s}
-input:focus,select:focus,textarea:focus{box-shadow:0 0 0 2px var(--accent),var(--sh)}
+/* Form controls.
+ *
+ * These used to be var(--card) with a soft shadow and no border, which is the
+ * same treatment a card gets. Against a page of #FAF6EF that put the field two
+ * percent away from the background, so a box you are meant to type into read as
+ * a faint shadow with nothing inside it, and a select read as a word with a
+ * chevron rather than a control. A field is the one element that has to say "I
+ * am a thing you operate", and it says it with a solid surface and an edge. */
+input[type="text"],input[type="email"],input[type="password"],input[type="search"],select,textarea{font-family:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line-strong);border-radius:14px;padding:13px 17px;box-shadow:none;outline:none;width:100%;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-halo)}
 textarea{resize:vertical;min-height:120px}
 .form-msg{border-radius:14px;padding:16px 20px;font-size:15px;margin-top:16px;display:none}
 .form-msg.ok{display:block;background:color-mix(in srgb,var(--follicular) 16%,var(--bg));color:var(--ink)}
 .form-msg.err{display:block;background:color-mix(in srgb,var(--menstrual) 14%,var(--bg));color:var(--ink)}
 .checks{display:flex;flex-wrap:wrap;gap:10px}
-.checks label{display:inline-flex;align-items:center;gap:8px;background:var(--card);box-shadow:var(--sh);border-radius:999px;padding:9px 16px;font-size:14px;cursor:pointer;user-select:none}
+.checks label{display:inline-flex;align-items:center;gap:8px;background:var(--card);box-shadow:0 0 0 1px var(--line);border-radius:999px;padding:9px 16px;font-size:14px;cursor:pointer;user-select:none}
 .checks input{accent-color:var(--accent)}
 /* honeypot: kept out of sight and out of the tab order, bots fill it anyway.
    Matches input[type="text"] specificity so the shared input width is overridden. */
@@ -137,7 +145,7 @@ footer{background:var(--bg2);padding:72px 0 36px;margin-top:0}
 .chart .bar-fill{height:100%;border-radius:999px;width:0;transition:width 1.1s cubic-bezier(.22,1,.36,1)}
 .chart .bar-val{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;min-width:3ch;text-align:right}
 .chart-cap{font-size:12.5px;color:var(--ink2);opacity:.75;margin-top:18px;line-height:1.5}
-.chart-card{background:var(--card);border-radius:22px;box-shadow:var(--sh);padding:32px 34px}
+.chart-card{background:var(--card);border-radius:22px;box-shadow:0 0 0 1px var(--line);padding:32px 34px}
 .chart-title{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);margin:0 0 22px}
 /* donut */
 .donut-wrap{display:flex;align-items:center;gap:26px;flex-wrap:wrap}
@@ -164,7 +172,7 @@ footer{background:var(--bg2);padding:72px 0 36px;margin-top:0}
 .jr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:48px}
 @media (max-width:920px){.jr-grid{grid-template-columns:1fr 1fr}}
 @media (max-width:600px){.jr-grid{grid-template-columns:1fr}}
-.jr-card{display:flex;flex-direction:column;background:var(--card);border-radius:22px;box-shadow:var(--sh);overflow:hidden;transition:transform .18s,box-shadow .18s}
+.jr-card{display:flex;flex-direction:column;background:var(--card);border-radius:22px;box-shadow:0 0 0 1px var(--line);overflow:hidden;transition:transform .18s,box-shadow .18s}
 .jr-card:hover{transform:translateY(-3px);box-shadow:var(--sh-lg)}
 /* position:relative so next/image's fill mode has a box to fill. */
 .jr-card .jr-photo{position:relative;aspect-ratio:16/10;overflow:hidden}
@@ -184,7 +192,7 @@ footer{background:var(--bg2);padding:72px 0 36px;margin-top:0}
 @media (max-width:900px){.circle-grid{grid-template-columns:1fr 1fr}}
 @media (max-width:600px){.circle-grid{grid-template-columns:1fr}}
 .qa-thread{display:flex;flex-direction:column;gap:18px;margin-top:40px}
-.qa-card{background:var(--card);border-radius:20px;box-shadow:var(--sh);padding:26px 30px}
+.qa-card{background:var(--card);border-radius:20px;box-shadow:0 0 0 1px var(--line);padding:26px 30px}
 .qa-q{display:flex;gap:14px;align-items:flex-start}
 .qa-av{width:40px;height:40px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;color:#fff}
 .qa-meta{font-size:13px;color:var(--ink2);margin-bottom:4px}
@@ -421,84 +429,85 @@ footer{background:var(--bg2);padding:72px 0 36px;margin-top:0}
  * components layer a utility always wins, which is the whole point of having
  * one. */
 @layer components {
+  /* The community's form controls, matching the marketing ones above: a solid
+     surface and a real edge. Same reasoning, and deliberately the same values,
+     so a field does not change character depending which half of the product
+     it is standing in. */
   .input {
     font-family: inherit;
     font-size: 16px;
     color: var(--ink);
-    background: var(--card);
-    border: none;
+    background: var(--field);
+    border: 1px solid var(--line-strong);
     border-radius: 14px;
-    padding: 14px 18px;
-    box-shadow: var(--sh);
+    padding: 13px 17px;
     outline: none;
     width: 100%;
-    transition: box-shadow 0.2s;
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
 
   .input:focus {
-    box-shadow: 0 0 0 2px var(--accent), var(--sh);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-halo);
   }
 
   .input::placeholder {
     color: var(--ink2);
-    opacity: 0.7;
+    opacity: 0.75;
   }
 
   textarea.input {
     resize: vertical;
   }
 
-  /* The community search field.
+  /* A select has to look like something that opens.
    *
-   * .input paints itself var(--card), which is #FFFCF5 against a page of
-   * #FAF6EF. Two percent apart. On a card that is the intention — the whole
-   * design separates surfaces with shadow rather than contrast — but a thing
-   * you are meant to type into has to look like a thing you can type into, and
-   * at that distance it read as a shadow floating on the background with no box
-   * inside it. So this one control opts out of the soft treatment: a genuinely
-   * lighter surface, and a hairline drawn as an inset shadow rather than a
-   * border, which keeps it inside the shadow scale the rest of the site uses.
-   *
-   * appearance:none is not cosmetic here. Safari, on iOS especially, gives
-   * input[type=search] its own native chrome and quietly refuses the radius and
-   * the background, which is the other half of why this field looked unlike
-   * every other input on the site. */
+   * Left to the browser it is a transparent box with a native chevron whose
+   * colour and position change per platform, and on a pale surface that reads
+   * as a line of text that happens to have an arrow near it. Drawing the
+   * chevron here means it is the same control everywhere, and the extra right
+   * padding stops a long option running underneath it. */
+  select,
+  select.input {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' stroke='%236B5D4F' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 8l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 42px;
+    cursor: pointer;
+  }
+
+  [data-theme="dark"] select,
+  [data-theme="dark"] select.input {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' stroke='%23B5A99A' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 8l5 5 5-5'/%3E%3C/svg%3E");
+  }
+
+  /* The search field is an input like any other now. It keeps its own class
+     only for the two things that are genuinely its own: Safari's native search
+     chrome, which ignores the radius and background unless appearance is
+     cleared, and its own clear button, which otherwise lands on the spinner. */
   .input-search {
     appearance: none;
     -webkit-appearance: none;
-    background: var(--search);
-    box-shadow:
-      inset 0 0 0 1px var(--hairline),
-      var(--sh);
   }
 
-  .input-search:focus {
-    box-shadow:
-      0 0 0 2px var(--accent),
-      var(--sh);
-  }
-
-  /* Safari draws its own clear button on top of the spinner otherwise. */
   .input-search::-webkit-search-decoration,
   .input-search::-webkit-search-cancel-button {
     -webkit-appearance: none;
   }
 
-  /* An unselected category chip had the same problem in a smaller box: surface
-     on background, near enough invisible, so a row of filters read as a row of
-     nothing. Same answer, so that the chips and the field they sit under look
-     like they belong to each other. */
+  /* An unselected category chip. A chip is a button, not a field, so it takes
+     the card surface rather than the field one -- white chips would have read
+     as five empty inputs in a row. The edge is what makes it a control. */
   .chip-idle {
-    background: var(--search);
-    box-shadow:
-      inset 0 0 0 1px var(--hairline),
-      var(--sh);
+    background: var(--card);
+    box-shadow: 0 0 0 1px var(--line);
   }
 
   .chip-idle:hover {
-    box-shadow:
-      inset 0 0 0 1px var(--hairline-strong),
-      var(--sh-lg);
+    background: var(--field);
+    box-shadow: 0 0 0 1px var(--line-strong);
   }
 
   /* The dim behind a modal.
@@ -508,10 +517,7 @@ footer{background:var(--bg2);padding:72px 0 36px;margin-top:0}
    * #F5EFE4, so the scrim was a pale wash *lightening* the page behind the
    * dialog rather than dimming it. A scrim is its own idea and gets its own
    * token, dark in both themes, because its job is to put everything behind
-   * the dialog out of reach rather than to tint it.
-   *
-   * The blur is what makes a half transparent panel readable over a page of
-   * text, and it degrades to plain dimming where it is unsupported. */
+   * the dialog out of reach rather than to tint it. */
   .modal-scrim {
     background: var(--scrim);
     backdrop-filter: blur(3px);

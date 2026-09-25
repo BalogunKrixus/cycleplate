@@ -92,11 +92,15 @@ export function PostCard({
   return (
     /* A pinned post is the one thing on this page somebody was meant to read
        first, and it used to say so with an eleven pixel chip among five other
-       chips. The card itself carries it now: a warm wash and a labelled strip,
-       so it reads as pinned before a single word is read. */
+       chips. The card itself carries it now: a warm wash, its edge in the same
+       colour rather than the usual hairline, and a labelled strip, so it reads
+       as pinned before a single word is. It is not lifted off the page to say
+       so -- it is not floating, it is just first. */
     <Card
       className={`animate-rise p-5 sm:p-6 ${
-        post.is_pinned ? "bg-ovulatory/[0.07] shadow-lift" : ""
+        post.is_pinned
+          ? "bg-ovulatory/[0.07] shadow-[0_0_0_1px_var(--ovulatory)]"
+          : ""
       }`}
     >
       {post.is_pinned ? (

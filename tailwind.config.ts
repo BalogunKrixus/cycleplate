@@ -7,8 +7,19 @@ import type { Config } from "tailwindcss";
  * dark theme work for free: [data-theme="dark"] reassigns the variables, and
  * every utility built on them follows without a single dark: prefix.
  *
- * No border utilities are used anywhere by design. Separation comes from the
- * shadow scale below, which is deliberately soft and low contrast.
+ * Separation comes from a hairline and a change of shade, not from blur. The
+ * original rule here was the opposite -- no borders anywhere, everything
+ * separated by a soft shadow -- and carried far enough that a text field, a
+ * select, a card, a chip and a button all wore the same faint halo. At that
+ * point the shadow had stopped separating anything, because everything had
+ * one, and the controls you were meant to operate looked like the surfaces you
+ * were meant to read.
+ *
+ * So `card` and `chip` below are no longer blurs. They are one pixel rings at
+ * zero radius: crisp edges, drawn as shadows purely so they cost no layout.
+ * `lift` is still a real shadow and is now the only one, reserved for things
+ * genuinely floating above the page -- a modal, the floating compose pill, the
+ * mobile menu, a popover, and the hover state of a card that moves.
  */
 const config: Config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
@@ -17,6 +28,10 @@ const config: Config = {
       colors: {
         /* Surfaces, darkest to lightest in the light theme. */
         bg: "var(--bg)",
+        /* The field surface and the hairline, so a component can reach them as
+           utilities instead of reaching for a shadow. */
+        field: "var(--field)",
+        line: "var(--line)",
         bg2: "var(--bg2)",
         surface: "var(--card)",
         cream: "var(--bg)",
@@ -48,9 +63,12 @@ const config: Config = {
         sans: ["Inter", "system-ui", "sans-serif"],
       },
       boxShadow: {
-        card: "var(--sh)",
+        /* Hairlines, not shadows. Named for what they are attached to rather
+           than renamed across every file that already uses them. */
+        card: "0 0 0 1px var(--line)",
+        chip: "0 0 0 1px var(--line)",
+        /* The only real shadow left. */
         lift: "var(--sh-lg)",
-        chip: "var(--sh)",
         inset: "inset 0 1px 2px rgba(42, 31, 23, 0.06)",
       },
       borderRadius: {
