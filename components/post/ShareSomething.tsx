@@ -137,7 +137,7 @@ export function ShareSomething({
 
       {open ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/25 p-4 sm:items-center"
+          className="modal-scrim fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
           role="dialog"
           aria-modal="true"
           aria-label="Share something with the community"

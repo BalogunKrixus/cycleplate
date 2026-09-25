@@ -15,8 +15,8 @@
  * accent here changes it everywhere, which is the whole point of merging the two
  * applications.
  */
-:root{--bg:#FAF6EF;--bg2:#F2ECDF;--card:#FFFCF5;--ink:#2A1F17;--ink2:#6B5D4F;--accent:#C15A3D;--accent-ink:#FFF8F0;--sh:0 2px 8px rgba(42,31,23,.04);--sh-lg:0 4px 12px rgba(42,31,23,.06);--menstrual:#B23A4B;--follicular:#7C9A65;--ovulatory:#E0A33E;--luteal:#96617F;--search:#FFFFFF;--hairline:rgba(42,31,23,.10);--hairline-strong:rgba(42,31,23,.18)}
-[data-theme="dark"]{--bg:#1F1712;--bg2:#2A211A;--card:#2E241C;--ink:#F5EFE4;--ink2:#B5A99A;--accent:#D77557;--accent-ink:#241108;--sh:0 2px 10px rgba(0,0,0,.20);--sh-lg:0 4px 16px rgba(0,0,0,.25);--menstrual:#D4677A;--follicular:#9DBB85;--ovulatory:#E8B65F;--luteal:#B583A3;--search:#3A2E24;--hairline:rgba(245,239,228,.14);--hairline-strong:rgba(245,239,228,.26)}
+:root{--bg:#FAF6EF;--bg2:#F2ECDF;--card:#FFFCF5;--ink:#2A1F17;--ink2:#6B5D4F;--accent:#C15A3D;--accent-ink:#FFF8F0;--sh:0 2px 8px rgba(42,31,23,.04);--sh-lg:0 4px 12px rgba(42,31,23,.06);--menstrual:#B23A4B;--follicular:#7C9A65;--ovulatory:#E0A33E;--luteal:#96617F;--search:#FFFFFF;--hairline:rgba(42,31,23,.10);--hairline-strong:rgba(42,31,23,.18);--scrim:rgba(26,18,12,.72)}
+[data-theme="dark"]{--bg:#1F1712;--bg2:#2A211A;--card:#2E241C;--ink:#F5EFE4;--ink2:#B5A99A;--accent:#D77557;--accent-ink:#241108;--sh:0 2px 10px rgba(0,0,0,.20);--sh-lg:0 4px 16px rgba(0,0,0,.25);--menstrual:#D4677A;--follicular:#9DBB85;--ovulatory:#E8B65F;--luteal:#B583A3;--search:#3A2E24;--hairline:rgba(245,239,228,.14);--hairline-strong:rgba(245,239,228,.26);--scrim:rgba(0,0,0,.68)}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:17px;line-height:1.65;transition:background .3s,color .3s;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
@@ -499,6 +499,23 @@ footer{background:var(--bg2);padding:72px 0 36px;margin-top:0}
     box-shadow:
       inset 0 0 0 1px var(--hairline-strong),
       var(--sh-lg);
+  }
+
+  /* The dim behind a modal.
+   *
+   * It used to be bg-ink/25, which is a text colour at a quarter strength. In
+   * the light theme that is a faint brown haze; in the dark theme --ink is
+   * #F5EFE4, so the scrim was a pale wash *lightening* the page behind the
+   * dialog rather than dimming it. A scrim is its own idea and gets its own
+   * token, dark in both themes, because its job is to put everything behind
+   * the dialog out of reach rather than to tint it.
+   *
+   * The blur is what makes a half transparent panel readable over a page of
+   * text, and it degrades to plain dimming where it is unsupported. */
+  .modal-scrim {
+    background: var(--scrim);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
   }
 }
 

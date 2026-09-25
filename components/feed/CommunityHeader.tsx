@@ -1,26 +1,30 @@
-import Link from "next/link";
-
 /* The top of the community.
  *
- * It used to be a 52px serif "Community" and a sentence, which is a marketing
- * header on a page people come back to every day: the largest thing on screen
- * told a returning member the one thing she already knew. The title is still
- * here, because a page needs a name, but it is sized like a product header
- * rather than a hero, and the space it gave back goes to the two things a
- * newcomer actually wants to know: is anyone here, and does anyone qualified
- * answer.
+ * It used to be a 52px serif "Community" over a sentence explaining that the
+ * community is anonymous and naming the handle you post under. Both were a
+ * marketing header on a page people come back to several times a day: the
+ * largest thing on screen told a returning member the one thing she already
+ * knew, and the sentence under it told her the second.
+ *
+ * The title is still here, because a page needs a name, but it is sized like a
+ * product header rather than a hero, and what the sentence took goes to the
+ * two things a newcomer actually wants to know: is anyone here, and does anyone
+ * qualified answer.
+ *
+ * Losing the sentence does not lose the fact. "You are posting as <handle>,
+ * your real name and email are never shown" is still said in the composer,
+ * which is the one moment it is genuinely load bearing -- at the point of
+ * writing, not permanently above a feed somebody is only reading.
  *
  * The counts are real or they are absent. A community showing "1 member" is
  * worse than one showing nothing, so each number appears only once there is
  * something to say, and the whole row disappears when there is not.
  */
 export function CommunityHeader({
-  displayName,
   members,
   postsThisWeek,
   professionals,
 }: {
-  displayName: string;
   members: number;
   postsThisWeek: number;
   professionals: number;
@@ -40,14 +44,6 @@ export function CommunityHeader({
       <h1 className="font-serif text-[30px] leading-none sm:text-[34px]">
         Community
       </h1>
-
-      <p className="mt-2 max-w-[52ch] text-[15px] leading-relaxed text-muted">
-        Anonymous by default, moderated with love. You are posting as{" "}
-        <Link href="/account" className="font-medium text-ink underline">
-          {displayName}
-        </Link>
-        .
-      </p>
 
       {stats.length ? (
         /* Signs of life, stated plainly. A dot between them rather than boxed

@@ -175,7 +175,6 @@ export default async function CommunityPage({
     <div className="mx-auto flex w-full max-w-5xl justify-center gap-8 px-5 pb-32 pt-8 sm:pt-12">
       <main className="w-full max-w-2xl">
         <CommunityHeader
-          displayName={viewer.display_name}
           members={memberCount ?? 0}
           postsThisWeek={weekCount ?? 0}
           professionals={professionalCount ?? 0}

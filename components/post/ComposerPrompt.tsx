@@ -1,6 +1,5 @@
 "use client";
 
-import { Avatar } from "@/components/ui/Primitives";
 import type { Profile } from "@/lib/types";
 
 /* The box, at the top of the feed, where a post starts.
@@ -23,9 +22,16 @@ export function ComposerPrompt({ viewer }: { viewer: Profile | null }) {
   }
 
   return (
-    <div className="mb-4 flex items-center gap-3 rounded-card bg-surface p-3.5 shadow-card sm:p-4">
-      {viewer ? <Avatar displayName={viewer.display_name} size={38} /> : null}
-
+    /* No card around it, and no avatar beside it.
+     *
+     * Both were there to say "this is you, writing", and both were paid for in
+     * the wrong currency: the card put a second pale surface behind a field
+     * that already has its own, so the field looked like it was floating in a
+     * box of nothing, and the avatar spent the left edge of the row telling a
+     * member the one thing she cannot possibly be unsure about. What is left is
+     * the two things that do work: somewhere to write, and the button that says
+     * what happens when you stop. */
+    <div className="mb-4 flex items-center gap-2">
       {/* A button rather than a real input. It looks like a field because that
           is what invites writing, but the writing happens in the composer, and
           a text box that silently threw away what you typed when it opened
@@ -41,16 +47,15 @@ export function ComposerPrompt({ viewer }: { viewer: Profile | null }) {
           : "Join to ask your first question"}
       </button>
 
-      {/* The field alone was not enough. Sitting directly above the search box,
-          which is also a pale rounded field with grey placeholder text, it read
-          as a second search rather than as somewhere to write. The button is
-          what separates them: one of these two boxes has an obvious thing that
-          happens when you finish, and it is this one. */}
+      {/* Visible at every width now. It used to be hidden below sm to make room
+          for the avatar, which meant the one screen where the field is most
+          ambiguous -- a phone, where it sits directly above a search box of the
+          same shape -- was the screen with nothing to tell them apart. */}
       <button
         type="button"
         onClick={open}
-        className="hidden shrink-0 rounded-chip bg-ink px-4 py-2.5 text-[14px] font-medium
-                   text-cream transition hover:shadow-lift sm:inline-flex"
+        className="shrink-0 rounded-chip bg-ink px-4 py-3 text-[14px] font-medium
+                   text-cream transition hover:shadow-lift sm:px-5"
       >
         {viewer ? "Post" : "Join"}
       </button>
