@@ -3,6 +3,13 @@ import Link from "next/link";
 
 import { InsightCard } from "@/components/marketing/InsightCard";
 import { Reveal } from "@/components/marketing/Reveal";
+import { createClient } from "@/lib/supabase/server";
+import type { Article } from "@/lib/types";
+
+/* Published articles come from the database, so a piece written in the admin
+   appears here without a deploy. That is the whole point of the table, and it
+   is why this page cannot be static. */
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Insights",
@@ -40,7 +47,26 @@ const ARTICLES = [
   },
 ];
 
-export default function InsightsPage() {
+/* Never let the index fail because the database is unreachable or migration
+   005 has not been run. The four original articles are files and should keep
+   rendering either way. */
+async function publishedArticles(): Promise<Article[]> {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("articles")
+      .select("*")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(24);
+    return (data ?? []) as Article[];
+  } catch {
+    return [];
+  }
+}
+
+export default async function InsightsPage() {
+  const written = await publishedArticles();
   return (
     <main>
       <section className="band" style={{ paddingBottom: 40 }}>
@@ -91,7 +117,29 @@ export default function InsightsPage() {
         </div>
       </section>
 
-      <section className="band alt">
+      {written.length ? (
+        <section className="band alt">
+          <div className="wrap">
+            <h2>Latest</h2>
+            <div className="jr-grid">
+              {written.map((a) => (
+                <InsightCard
+                  key={a.id}
+                  href={`/insights/${a.slug}`}
+                  photo={a.featured_image || "/photos/buddha-bowl.jpg"}
+                  alt=""
+                  tag={a.category || "Insights"}
+                  title={a.title}
+                  body={a.excerpt || ""}
+                  read="Read →"
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      <section className={written.length ? "band" : "band alt"}>
         <div className="wrap">
           <h2>More from Insights</h2>
           <div className="jr-grid">

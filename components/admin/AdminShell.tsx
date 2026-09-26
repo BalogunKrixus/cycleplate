@@ -22,6 +22,8 @@ const SECTIONS = [
   { href: "/admin", label: "Overview", exact: true, icon: "M4 13h6V4H4zM14 20h6V4h-6zM4 20h6v-5H4z" },
   { href: "/admin/members", label: "Members", icon: "M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20M9 7.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7M22 20v-1.5a4 4 0 0 0-3-3.87M16 4.13a4 4 0 0 1 0 7.75" },
   { href: "/admin/content", label: "Content", icon: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" },
+  { href: "/admin/insights", label: "Insights", icon: "M12 3a6 6 0 0 0-3.6 10.8c.4.3.6.8.6 1.2v1h6v-1c0-.4.2-.9.6-1.2A6 6 0 0 0 12 3zM9 20h6" },
+  { href: "/admin/notifications", label: "Notifications", icon: "M3 7l9 6 9-6M3 7v10a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z" },
 ] as const;
 
 export function AdminShell({

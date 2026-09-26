@@ -82,3 +82,45 @@ function phaseIndex(slug: string | null | undefined): number {
   }
   return hash % CATEGORY_COLOR_ORDER.length;
 }
+
+/* Slugs the file-based articles already own. A row with one of these would be
+   invisible: Next serves the static route and the database version is never
+   reached, so the admin refuses the name rather than letting somebody publish
+   into a hole. Keep in step with app/(site)/insights/. */
+export const RESERVED_ARTICLE_SLUGS = [
+  "pcos",
+  "endometriosis",
+  "period-pain",
+  "pms",
+] as const;
+
+/* What an article can be filed under. A short fixed list rather than a table:
+   these are editorial sections, they change about once a year, and a second
+   categories table to maintain would be the definition of over-engineering. */
+export const ARTICLE_CATEGORIES = [
+  "PCOS",
+  "Endometriosis",
+  "Period pain",
+  "PMS & mood",
+  "Nutrition",
+  "Cycle science",
+  "Community",
+] as const;
+
+/* Turns a title into an address.
+ *
+ * Lives here rather than in lib/actions.ts because that file is "use server"
+ * and every export from one of those has to be an async server action -- a
+ * plain helper alongside them fails the build. It is shared rather than
+ * duplicated so the slug previewed in the editor is character for character
+ * the one the server saves.
+ */
+export function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}

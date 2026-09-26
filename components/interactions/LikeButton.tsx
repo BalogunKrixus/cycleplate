@@ -80,7 +80,7 @@ export function LikeButton({
       onClick={toggle}
       aria-pressed={liked}
       aria-label={liked ? "Remove your like" : "Like this"}
-      className="inline-flex items-center gap-1.5 text-[13px] text-muted transition hover:text-menstrual"
+      className="inline-flex items-center gap-1.5 text-[13px] text-muted transition hover:text-menstrual-ink"
     >
       <svg
         width="16"

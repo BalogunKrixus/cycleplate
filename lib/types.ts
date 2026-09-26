@@ -17,6 +17,9 @@ export interface Profile {
   professional_category_other: string | null;
   display_name_changed: boolean;
   created_at: string;
+  /* Added by migration 006. Optional so the app keeps working against a
+     database where it has not been run: undefined reads as "not set up". */
+  email_opt_in?: boolean;
 }
 
 export interface Category {
@@ -81,4 +84,25 @@ export interface FeedPost extends Post {
 
 export interface FeedReply extends Reply {
   liked_by_viewer: boolean;
+}
+
+/* An Insights article, written in the admin and stored in the database rather
+   than committed as a file. The four original articles are still React files;
+   a static route beats a dynamic one, so both live at /insights/<slug>. */
+export interface Article {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  body: string;
+  featured_image: string | null;
+  category: string | null;
+  tags: string[];
+  seo_title: string | null;
+  seo_description: string | null;
+  status: "draft" | "published";
+  published_at: string | null;
+  author_id: string | null;
+  created_at: string;
+  updated_at: string;
 }

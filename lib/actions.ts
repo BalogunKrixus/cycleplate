@@ -5,6 +5,9 @@ import { headers } from "next/headers";
 import { createClient as createAuthClient } from "@supabase/supabase-js";
 import { createClient, getViewer } from "@/lib/supabase/server";
 import { isModerator, isSuperAdmin } from "@/lib/roles";
+import { RESERVED_ARTICLE_SLUGS, slugify } from "@/lib/config";
+import { emailConfigured, sendBatch, type Envelope } from "@/lib/email";
+import { notificationHtml, notificationText } from "@/lib/notificationEmail";
 import { supabaseEnv } from "@/lib/supabase/env";
 import { POST_MAX_LENGTH, REPLY_MAX_LENGTH } from "@/lib/config";
 import { validateDisplayName } from "@/lib/displayName";
@@ -408,5 +411,269 @@ export async function setMemberRole(
   if (error) return { ok: false, error: "That did not save." };
 
   revalidatePath("/admin/members");
+  return { ok: true };
+}
+
+/* ---------------------------------------------------------------- insights */
+
+export interface ArticleInput {
+  id?: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  body: string;
+  featured_image: string;
+  category: string;
+  tags: string;
+  seo_title: string;
+  seo_description: string;
+  status: "draft" | "published";
+}
+
+export async function saveArticle(
+  input: ArticleInput,
+): Promise<ActionResult & { id?: string; slug?: string }> {
+  const viewer = await getViewer();
+  if (!viewer || !isModerator(viewer)) {
+    return { ok: false, error: "Not allowed." };
+  }
+
+  const title = input.title.trim();
+  if (!title) return { ok: false, error: "Give it a title." };
+
+  const slug = slugify(input.slug.trim() || title);
+  if (!slug) return { ok: false, error: "That title makes an empty address." };
+
+  /* The four original articles are files, and a static route wins over a
+     dynamic one. A row with one of their slugs would save happily and then be
+     unreachable for ever, which is worse than being told no. */
+  if ((RESERVED_ARTICLE_SLUGS as readonly string[]).includes(slug)) {
+    return {
+      ok: false,
+      error: `"${slug}" is one of the original articles. Choose another address.`,
+    };
+  }
+
+  if (input.status === "published" && !input.body.trim()) {
+    return { ok: false, error: "There is nothing to publish yet." };
+  }
+
+  const supabase = await createClient();
+
+  const row = {
+    slug,
+    title,
+    excerpt: input.excerpt.trim() || null,
+    body: input.body,
+    featured_image: input.featured_image.trim() || null,
+    category: input.category.trim() || null,
+    tags: input.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean),
+    seo_title: input.seo_title.trim() || null,
+    seo_description: input.seo_description.trim() || null,
+    status: input.status,
+  };
+
+  const { data, error } = input.id
+    ? await supabase
+        .from("articles")
+        .update(row)
+        .eq("id", input.id)
+        .select("id, slug")
+        .maybeSingle()
+    : await supabase
+        .from("articles")
+        .insert({ ...row, author_id: viewer.id })
+        .select("id, slug")
+        .maybeSingle();
+
+  if (error) {
+    /* 23505 is the unique index on slug. Everything else is a surprise and is
+       worth saying out loud rather than flattening into "that did not save". */
+    if (error.code === "23505") {
+      return { ok: false, error: `Something already lives at /insights/${slug}.` };
+    }
+    console.error("saveArticle failed:", error.code, error.message);
+    return { ok: false, error: "That did not save. Please try again." };
+  }
+
+  /* Selecting the row back is the check, not a convenience: row level security
+     refuses without raising, so no row means the write was declined. */
+  if (!data) return { ok: false, error: "Not allowed." };
+
+  revalidatePath("/insights");
+  revalidatePath(`/insights/${slug}`);
+  revalidatePath("/admin/insights");
+  return { ok: true, id: data.id as string, slug: data.slug as string };
+}
+
+export async function deleteArticle(id: string): Promise<ActionResult> {
+  const viewer = await getViewer();
+  if (!viewer || !isModerator(viewer)) {
+    return { ok: false, error: "Not allowed." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("articles")
+    .delete()
+    .eq("id", id)
+    .select("slug")
+    .maybeSingle();
+
+  if (error) return { ok: false, error: "That did not delete." };
+  if (!data) return { ok: false, error: "Not allowed." };
+
+  revalidatePath("/insights");
+  revalidatePath(`/insights/${data.slug as string}`);
+  revalidatePath("/admin/insights");
+  return { ok: true };
+}
+
+/* ----------------------------------------------------------- notifications */
+
+interface Recipient {
+  id: string;
+  email: string;
+  display_name: string;
+  unsubscribe_token: string;
+}
+
+/* How many people a send would actually reach, for the screen that is about
+   to ask somebody to press a button they cannot take back. */
+export async function countRecipients(): Promise<
+  ActionResult & { count?: number; configured?: boolean }
+> {
+  const viewer = await getViewer();
+  if (!viewer || !isModerator(viewer)) return { ok: false, error: "Not allowed." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("notification_recipients");
+  if (error) {
+    return {
+      ok: false,
+      error:
+        error.code === "42883"
+          ? "Run migration 006 first: notifications are not set up yet."
+          : "Could not read the member list.",
+    };
+  }
+
+  return {
+    ok: true,
+    count: (data as Recipient[] | null)?.length ?? 0,
+    configured: emailConfigured(),
+  };
+}
+
+export async function sendNotification(input: {
+  subject: string;
+  body: string;
+  postId: string | null;
+}): Promise<ActionResult & { sent?: number; failed?: number }> {
+  const viewer = await getViewer();
+  if (!viewer || !isModerator(viewer)) return { ok: false, error: "Not allowed." };
+
+  const subject = input.subject.trim();
+  const body = input.body.trim();
+  if (!subject) return { ok: false, error: "Give it a subject." };
+  if (!body) return { ok: false, error: "Write something to send." };
+  if (!emailConfigured()) {
+    return {
+      ok: false,
+      error:
+        "No RESEND_API_KEY is set on the deployment, so nothing can be sent yet.",
+    };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("notification_recipients");
+  if (error) return { ok: false, error: "Could not read the member list." };
+
+  const recipients = (data as Recipient[] | null) ?? [];
+  if (recipients.length === 0) {
+    return { ok: false, error: "Nobody is opted in to receive these." };
+  }
+
+  /* Absolute, because this is going into an inbox. Taken from the request so a
+     preview deployment mails links back to itself rather than to production. */
+  const head = await headers();
+  const host = head.get("x-forwarded-host") ?? head.get("host") ?? "hellocycleplate.com";
+  const proto = head.get("x-forwarded-proto") ?? "https";
+  const origin = `${proto}://${host}`;
+
+  const link = input.postId ? `${origin}/app?post=${input.postId}` : undefined;
+
+  const envelopes: Envelope[] = recipients.map((r) => {
+    const unsubscribeUrl = `${origin}/unsubscribe/${r.unsubscribe_token}`;
+    return {
+      to: r.email,
+      subject,
+      html: notificationHtml({
+        body,
+        link,
+        linkLabel: "Read it in the community",
+        unsubscribeUrl,
+      }),
+      text: notificationText({ body, link, unsubscribeUrl }),
+    };
+  });
+
+  const report = await sendBatch(envelopes);
+
+  /* Recorded whatever happened, including a total failure, because "did we
+     email about that?" is the question this table exists to answer. */
+  await supabase.from("notifications_sent").insert({
+    subject,
+    body,
+    post_id: input.postId,
+    sent_by: viewer.id,
+    recipients: report.sent,
+    failed: report.failed,
+  });
+
+  revalidatePath("/admin/notifications");
+
+  if (report.sent === 0) {
+    return {
+      ok: false,
+      error: `Nothing was sent. ${report.firstError ?? "The mail provider refused every message."}`,
+    };
+  }
+
+  return { ok: true, sent: report.sent, failed: report.failed };
+}
+
+/* A member turning notification email on or off from her account.
+ *
+ * The unsubscribe link in the mail is the path most people will use, but
+ * somebody who has decided in advance should not have to wait to be emailed
+ * before she can say no. Only ever her own row; role and category are pinned
+ * by policy regardless. */
+export async function setEmailOptIn(optIn: boolean): Promise<ActionResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { ok: false, error: "Please sign in." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ email_opt_in: optIn })
+    .eq("id", viewer.id)
+    .select("id");
+
+  if (error) {
+    return {
+      ok: false,
+      error:
+        error.code === "42703"
+          ? "Email preferences are not set up yet. Run migration 006."
+          : "That did not save. Please try again.",
+    };
+  }
+  if (!data || data.length === 0) return { ok: false, error: "That did not save." };
+
+  revalidatePath("/account");
   return { ok: true };
 }

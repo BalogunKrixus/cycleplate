@@ -129,7 +129,7 @@ function ContentRow({ kind, row }: { kind: "post" | "reply"; row: Post | Reply }
               type="button"
               disabled={busy}
               onClick={() => run(() => softDelete(kind, row.id))}
-              className="text-[13px] text-muted transition hover:text-menstrual disabled:opacity-50"
+              className="text-[13px] text-muted transition hover:text-menstrual-ink disabled:opacity-50"
             >
               Remove
             </button>

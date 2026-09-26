@@ -27,12 +27,16 @@ export function PostCard({
   post,
   categories,
   viewer,
+  highlight = false,
 }: {
   post: FeedPost;
   categories: Category[];
   viewer: Profile | null;
+  /* The post an emailed link points at: opened on arrival, and marked so it
+     is obvious which one the mail was about. */
+  highlight?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(highlight);
   const [replies, setReplies] = useState<FeedReply[] | null>(
     post.matching_replies ?? null,
   );
@@ -89,6 +93,13 @@ export function PostCard({
     if (next && replies === null) void loadReplies();
   }
 
+  /* Arriving from an emailed link, the card is already open, so its replies
+     have to be fetched without anybody pressing anything. */
+  useEffect(() => {
+    if (highlight && replies === null) void loadReplies();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlight]);
+
   return (
     /* A pinned post is the one thing on this page somebody was meant to read
        first, and it used to say so with an eleven pixel chip among five other
@@ -98,9 +109,11 @@ export function PostCard({
        so -- it is not floating, it is just first. */
     <Card
       className={`animate-rise p-5 sm:p-6 ${
-        post.is_pinned
-          ? "bg-ovulatory/[0.07] shadow-[0_0_0_1px_var(--ovulatory)]"
-          : ""
+        highlight
+          ? "shadow-[0_0_0_2px_var(--accent)]"
+          : post.is_pinned
+            ? "bg-ovulatory/[0.07] shadow-[0_0_0_1px_var(--ovulatory)]"
+            : ""
       }`}
     >
       {post.is_pinned ? (
@@ -211,7 +224,7 @@ export function PostCard({
                         router.refresh();
                       })
                     }
-                    className="text-[13px] text-muted transition hover:text-menstrual"
+                    className="text-[13px] text-muted transition hover:text-menstrual-ink"
                   >
                     Remove
                   </button>
@@ -317,7 +330,7 @@ function ReplyItem({
                     router.refresh();
                   })
                 }
-                className="text-[12px] text-muted transition hover:text-menstrual"
+                className="text-[12px] text-muted transition hover:text-menstrual-ink"
               >
                 Remove
               </button>

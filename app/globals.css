@@ -32,7 +32,19 @@ a{color:var(--accent);text-decoration:none}
    Scoped to paragraphs so the nav, the footer lists and the cards, where a
    link is the whole element rather than a word inside one, stay unmarked. */
 p a,.refs li a{text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px}
-a:hover{color:var(--ink)}
+/* Scoped to prose, deliberately.
+ *
+ * This was `a:hover{color:var(--ink)}`, applied to every link on the site. An
+ * element-plus-pseudo-class selector scores higher than a single class, so it
+ * quietly beat every Tailwind text colour: any link carrying `text-cream` on a
+ * `bg-ink` pill -- the selected category chip, the selected admin section --
+ * had its label repainted ink on ink the moment the pointer touched it, and
+ * the word vanished. 14.92:1 to 1.25:1 on hover.
+ *
+ * Only prose wanted this in the first place: a citation or an inline link
+ * darkening as you point at it. Everything else states its own hover, and the
+ * nav and footer always did. */
+p a:hover,.refs li a:hover,.foot-legal a:hover{color:var(--ink)}
 img{max-width:100%;display:block}
 .wrap{max-width:1160px;margin:0 auto;padding:0 28px}
 .band{padding:96px 0}
