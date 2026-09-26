@@ -233,9 +233,7 @@ export default async function CommunityPage() {
                   className="phase-chip"
                   style={{
                     background: `color-mix(in srgb,var(--${circle.phase}) ${circle.mix}%,var(--card))`,
-                    color: circle.solid
-                      ? `var(--${circle.phase})`
-                      : `color-mix(in srgb,var(--${circle.phase}) 70%,var(--ink))`,
+                    color: `var(--${circle.phase}-ink)`,
                   }}
                 >
                   <span

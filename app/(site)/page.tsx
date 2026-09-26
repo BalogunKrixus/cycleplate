@@ -209,9 +209,7 @@ export default function HomePage() {
                     className="phase-chip"
                     style={{
                       background: `color-mix(in srgb,var(--${c.phase}) ${c.mix}%,var(--card))`,
-                      color: c.solid
-                        ? `var(--${c.phase})`
-                        : `color-mix(in srgb,var(--${c.phase}) 70%,var(--ink))`,
+                      color: `var(--${c.phase}-ink)`,
                     }}
                   >
                     <span

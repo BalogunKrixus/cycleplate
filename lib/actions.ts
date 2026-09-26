@@ -252,15 +252,30 @@ export async function updateProfessionalCategory(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+
+  /* Selecting the row back is the point, not a convenience.
+   *
+   * Row level security decides this, and an update it refuses does not raise:
+   * it matches no rows and returns success, so the old code told a dietitian
+   * her qualification had been saved when nothing had been written. Asking for
+   * the row back is the only way to tell "saved" from "silently refused". */
+  const { data, error } = await supabase
     .from("profiles")
     .update({
       professional_category: category,
       professional_category_other: category === "other" ? other!.trim() : null,
     })
-    .eq("id", viewer.id);
+    .eq("id", viewer.id)
+    .select("id");
 
   if (error) return { ok: false, error: "That did not save. Please try again." };
+  if (!data || data.length === 0) {
+    return {
+      ok: false,
+      error:
+        "That did not save. Ask an admin to set your category, or try again shortly.",
+    };
+  }
 
   revalidatePath("/account");
   return { ok: true };

@@ -32,6 +32,21 @@ export const PHASE_COLORS = {
   luteal: "#96617F",
 } as const;
 
+/* The same four, dark enough to be read.
+ *
+ * A category chip paints its text in the phase colour on a 10% tint of that
+ * same colour, which is a lovely idea and, for the gold, produced 2.01:1 --
+ * text you cannot see. These are used wherever a phase colour is the writing;
+ * the vivid ones above stay for the dot, the fill and the charts, where nothing
+ * sits on top. They are CSS variables rather than hexes so the dark theme can
+ * go the other way and lighten instead. */
+export const PHASE_INK = {
+  menstrual: "var(--menstrual-ink)",
+  follicular: "var(--follicular-ink)",
+  ovulatory: "var(--ovulatory-ink)",
+  luteal: "var(--luteal-ink)",
+} as const;
+
 const CATEGORY_COLOR_ORDER = [
   PHASE_COLORS.menstrual,
   PHASE_COLORS.follicular,
@@ -39,14 +54,31 @@ const CATEGORY_COLOR_ORDER = [
   PHASE_COLORS.luteal,
 ];
 
+/* Same order, so a slug keeps the same hue whichever of the two it asks for. */
+const CATEGORY_INK_ORDER = [
+  PHASE_INK.menstrual,
+  PHASE_INK.follicular,
+  PHASE_INK.ovulatory,
+  PHASE_INK.luteal,
+];
+
 /* Categories are editable in the panel, so a colour cannot be hardcoded per
    slug. Deriving it from the slug keeps a category the same colour for good,
    without a lookup table to maintain. */
 export function categoryColor(slug: string | null | undefined): string {
-  if (!slug) return PHASE_COLORS.luteal;
+  return CATEGORY_COLOR_ORDER[phaseIndex(slug)];
+}
+
+/* The readable counterpart, for the label on the chip. */
+export function categoryInk(slug: string | null | undefined): string {
+  return CATEGORY_INK_ORDER[phaseIndex(slug)];
+}
+
+function phaseIndex(slug: string | null | undefined): number {
+  if (!slug) return 3;
   let hash = 0;
   for (let i = 0; i < slug.length; i += 1) {
     hash = (hash * 31 + slug.charCodeAt(i)) >>> 0;
   }
-  return CATEGORY_COLOR_ORDER[hash % CATEGORY_COLOR_ORDER.length];
+  return hash % CATEGORY_COLOR_ORDER.length;
 }

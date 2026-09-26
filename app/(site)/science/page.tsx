@@ -99,9 +99,7 @@ export default function SciencePage() {
                   className="phase-chip"
                   style={{
                     background: `color-mix(in srgb,var(--${p.phase}) ${p.mix}%,var(--bg))`,
-                    color: p.solid
-                      ? `var(--${p.phase})`
-                      : `color-mix(in srgb,var(--${p.phase}) 70%,var(--ink))`,
+                    color: `var(--${p.phase}-ink)`,
                   }}
                 >
                   <span className="dot" style={{ background: `var(--${p.phase})` }} />

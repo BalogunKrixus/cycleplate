@@ -24,6 +24,7 @@ do $$
 declare
   member_id  uuid;
   admin_id   uuid;
+  pro_id     uuid;
   victim_post uuid;
   n integer;
 begin
@@ -70,7 +71,9 @@ begin
     raise exception 'FAIL: a member changed another account''s role';
   end if;
 
-  -- Cannot give herself a professional badge.
+  -- Cannot give herself a professional badge. This is the one an ordinary
+  -- member would actually try: the role is what draws the badge, but a
+  -- category on a member row is still a clinical title she did not earn.
   update public.profiles set professional_category = 'doctor' where id = member_id;
   if (select professional_category from public.profiles where id = member_id) is not null then
     raise exception 'FAIL: a member awarded herself a professional category';
@@ -127,6 +130,29 @@ begin
   -- And neither are the admin metrics.
   if public.admin_overview() is not null then
     raise exception 'FAIL: a member can read admin_overview()';
+  end if;
+
+  ------------------------------------- a professional may set her own category
+  -- The mirror of the check above, and the one that was silently broken:
+  -- pinning the category for everybody meant a real dietitian could not say
+  -- which title she replies under, and the page claimed success anyway.
+  select id into pro_id from public.profiles where role = 'professional' limit 1;
+
+  if pro_id is not null then
+    perform set_config('request.jwt.claims',
+                       json_build_object('sub', pro_id, 'role', 'authenticated')::text, true);
+
+    update public.profiles set professional_category = 'nutritionist' where id = pro_id;
+    get diagnostics n = row_count;
+    if n = 0 then
+      raise exception 'FAIL: a professional cannot set her own category (migration 004 not run?)';
+    end if;
+
+    -- ...but still cannot promote herself.
+    update public.profiles set role = 'admin' where id = pro_id;
+    if (select role from public.profiles where id = pro_id) = 'admin' then
+      raise exception 'FAIL: a professional promoted herself to admin';
+    end if;
   end if;
 
   ------------------------------------------------------- the admin can, still
