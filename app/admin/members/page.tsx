@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient, requireAdmin } from "@/lib/supabase/server";
-import { AdminNav } from "@/components/admin/AdminNav";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { MemberManager } from "@/components/admin/MemberManager";
 import type { Profile, UserRole } from "@/lib/types";
 
@@ -15,6 +15,13 @@ export interface MemberRow {
   professional_category: Profile["professional_category"];
   professional_category_other: string | null;
   created_at: string;
+  /* Added by migration 003. Older databases return undefined for these rather
+     than failing, so every use guards for it and the screen still works before
+     the migration is run. */
+  last_seen_at?: string | null;
+  post_count?: number;
+  reply_count?: number;
+  flag_count?: number;
 }
 
 export default async function MembersPage({
@@ -44,15 +51,16 @@ export default async function MembersPage({
     .order("display_name");
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-5 py-14">
-      <AdminNav current="members" />
-      <h1 className="mt-4 text-[36px] leading-tight">Members</h1>
-      <p className="mt-2 text-[15px] text-muted">
-        {canGrantRoles
+    <AdminShell
+      viewer={admin}
+      current="/admin/members"
+      title="Members"
+      intro={
+        canGrantRoles
           ? "Search by display name or email, then grant or revoke Professional status and moderator rights."
-          : "Search by display name or email. Changing roles is a super admin's job, so this list is read only for you."}
-      </p>
-
+          : "Search by display name or email. Changing roles is a super admin's job, so this list is read only for you."
+      }
+    >
       <MemberManager
         query={query}
         results={(results ?? []) as MemberRow[]}
@@ -60,6 +68,6 @@ export default async function MembersPage({
         currentAdminId={admin.id}
         canGrantRoles={canGrantRoles}
       />
-    </main>
+    </AdminShell>
   );
 }

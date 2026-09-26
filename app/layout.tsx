@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 
-import { Footer } from "@/components/chrome/Footer";
-import { Header } from "@/components/chrome/Header";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -38,13 +36,14 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      {/* One header and one footer for the whole product. The community used to
-          render its own, which is what made it feel like a different site. */}
-      <body>
-        <Header />
-        {children}
-        <Footer />
-      </body>
+      {/* Just the document. The site header and footer live in the (site) group
+          rather than here, because the admin is not part of that site: it is a
+          separate tool for two people, and giving it a marketing nav with a
+          "Go to Community" button on top of a moderation queue is exactly the
+          seam this split removes. Everything shared -- the theme bootstrap
+          above, the fonts, globals.css -- still lives here, so both halves stay
+          the same product underneath. */}
+      <body>{children}</body>
     </html>
   );
 }
