@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { updateDisplayName, updateProfessionalCategory } from "@/lib/actions";
+import {
+  setEmailOptIn as setEmailOptInAction,
+  updateDisplayName,
+  updateProfessionalCategory,
+} from "@/lib/actions";
 import { Avatar, Button, Card } from "@/components/ui/Primitives";
 import { PROFESSIONAL_CATEGORIES } from "@/lib/config";
 import type { Profile, ProfessionalCategory } from "@/lib/types";
@@ -23,6 +27,11 @@ export function AccountSettings({ viewer }: { viewer: Profile }) {
   const [categoryError, setCategoryError] = useState<string | null>(null);
   const [categorySaved, setCategorySaved] = useState(false);
   const [savingCategory, setSavingCategory] = useState(false);
+  /* Undefined means migration 006 has not run; treat that as opted in,
+     which is what the column defaults to. */
+  const [emailOptIn, setEmailOptIn] = useState(viewer.email_opt_in ?? true);
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   async function saveName() {
     setNameError(null);
@@ -50,6 +59,22 @@ export function AccountSettings({ viewer }: { viewer: Profile }) {
     else {
       setCategorySaved(true);
       router.refresh();
+    }
+  }
+
+  async function toggleEmail() {
+    setEmailError(null);
+    setSavingEmail(true);
+    const next = !emailOptIn;
+    /* Moved first so the switch answers the tap, and put back if the write is
+       refused. A preference toggle that waits on a round trip to Ireland feels
+       broken long before it feels careful. */
+    setEmailOptIn(next);
+    const result = await setEmailOptInAction(next);
+    setSavingEmail(false);
+    if (!result.ok) {
+      setEmailOptIn(!next);
+      setEmailError(result.error);
     }
   }
 
@@ -166,6 +191,33 @@ export function AccountSettings({ viewer }: { viewer: Profile }) {
           </Button>
         </Card>
       ) : null}
+
+      <Card className="p-6">
+        <h2 className="text-[20px]">Email</h2>
+        <p className="mt-1 text-[14px] leading-relaxed text-muted">
+          Occasional notes when something worth reading happens in the
+          community. Never more than that, and never your cycle data.
+        </p>
+
+        <label className="mt-4 flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={emailOptIn}
+            onChange={toggleEmail}
+            disabled={savingEmail}
+            className="h-4 w-4 accent-accent"
+          />
+          <span className="text-[15px]">
+            {emailOptIn ? "Yes, email me about the community" : "No community emails"}
+          </span>
+        </label>
+
+        {emailError ? (
+          <p role="alert" className="mt-3 text-[13px] text-menstrual-ink">
+            {emailError}
+          </p>
+        ) : null}
+      </Card>
 
       <Card className="p-6">
         <h2 className="text-[20px]">Signing out</h2>

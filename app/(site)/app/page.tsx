@@ -25,11 +25,15 @@ export const metadata = {
 export default async function CommunityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string }>;
+  searchParams: Promise<{ q?: string; category?: string; post?: string }>;
 }) {
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
   const activeCategory = params.category ?? null;
+  /* Where an emailed notification lands. The post is pulled to the top and
+     opened, rather than left somewhere down a feed that has moved on since
+     the mail went out. */
+  const focusPost = params.post ?? null;
 
   /* The community is the members' side of the product, so it asks who you are
      before anything else. The marketing page at /community is the public face
@@ -163,6 +167,25 @@ export default async function CommunityPage({
     }
   }
 
+  /* The linked post may be older than the page of posts fetched above, so it
+     is looked up separately when it is not already in hand. */
+  if (focusPost && !posts.some((p) => p.id === focusPost)) {
+    const { data: one } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("id", focusPost)
+      .eq("is_deleted", false)
+      .maybeSingle();
+    if (one) posts = [one as Post, ...posts];
+  }
+
+  if (focusPost) {
+    posts = [
+      ...posts.filter((p) => p.id === focusPost),
+      ...posts.filter((p) => p.id !== focusPost),
+    ];
+  }
+
   const feed: FeedPost[] = posts.map((post) => ({
     ...post,
     liked_by_viewer: likedPosts.has(post.id),
@@ -225,6 +248,7 @@ export default async function CommunityPage({
               post={post}
               categories={categories}
               viewer={viewer}
+              highlight={post.id === focusPost}
             />
           ))}
 

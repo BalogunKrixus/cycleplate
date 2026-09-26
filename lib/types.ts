@@ -17,6 +17,9 @@ export interface Profile {
   professional_category_other: string | null;
   display_name_changed: boolean;
   created_at: string;
+  /* Added by migration 006. Optional so the app keeps working against a
+     database where it has not been run: undefined reads as "not set up". */
+  email_opt_in?: boolean;
 }
 
 export interface Category {

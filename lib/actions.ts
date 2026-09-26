@@ -6,6 +6,8 @@ import { createClient as createAuthClient } from "@supabase/supabase-js";
 import { createClient, getViewer } from "@/lib/supabase/server";
 import { isModerator, isSuperAdmin } from "@/lib/roles";
 import { RESERVED_ARTICLE_SLUGS, slugify } from "@/lib/config";
+import { emailConfigured, sendBatch, type Envelope } from "@/lib/email";
+import { notificationHtml, notificationText } from "@/lib/notificationEmail";
 import { supabaseEnv } from "@/lib/supabase/env";
 import { POST_MAX_LENGTH, REPLY_MAX_LENGTH } from "@/lib/config";
 import { validateDisplayName } from "@/lib/displayName";
@@ -527,5 +529,151 @@ export async function deleteArticle(id: string): Promise<ActionResult> {
   revalidatePath("/insights");
   revalidatePath(`/insights/${data.slug as string}`);
   revalidatePath("/admin/insights");
+  return { ok: true };
+}
+
+/* ----------------------------------------------------------- notifications */
+
+interface Recipient {
+  id: string;
+  email: string;
+  display_name: string;
+  unsubscribe_token: string;
+}
+
+/* How many people a send would actually reach, for the screen that is about
+   to ask somebody to press a button they cannot take back. */
+export async function countRecipients(): Promise<
+  ActionResult & { count?: number; configured?: boolean }
+> {
+  const viewer = await getViewer();
+  if (!viewer || !isModerator(viewer)) return { ok: false, error: "Not allowed." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("notification_recipients");
+  if (error) {
+    return {
+      ok: false,
+      error:
+        error.code === "42883"
+          ? "Run migration 006 first: notifications are not set up yet."
+          : "Could not read the member list.",
+    };
+  }
+
+  return {
+    ok: true,
+    count: (data as Recipient[] | null)?.length ?? 0,
+    configured: emailConfigured(),
+  };
+}
+
+export async function sendNotification(input: {
+  subject: string;
+  body: string;
+  postId: string | null;
+}): Promise<ActionResult & { sent?: number; failed?: number }> {
+  const viewer = await getViewer();
+  if (!viewer || !isModerator(viewer)) return { ok: false, error: "Not allowed." };
+
+  const subject = input.subject.trim();
+  const body = input.body.trim();
+  if (!subject) return { ok: false, error: "Give it a subject." };
+  if (!body) return { ok: false, error: "Write something to send." };
+  if (!emailConfigured()) {
+    return {
+      ok: false,
+      error:
+        "No RESEND_API_KEY is set on the deployment, so nothing can be sent yet.",
+    };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("notification_recipients");
+  if (error) return { ok: false, error: "Could not read the member list." };
+
+  const recipients = (data as Recipient[] | null) ?? [];
+  if (recipients.length === 0) {
+    return { ok: false, error: "Nobody is opted in to receive these." };
+  }
+
+  /* Absolute, because this is going into an inbox. Taken from the request so a
+     preview deployment mails links back to itself rather than to production. */
+  const head = await headers();
+  const host = head.get("x-forwarded-host") ?? head.get("host") ?? "hellocycleplate.com";
+  const proto = head.get("x-forwarded-proto") ?? "https";
+  const origin = `${proto}://${host}`;
+
+  const link = input.postId ? `${origin}/app?post=${input.postId}` : undefined;
+
+  const envelopes: Envelope[] = recipients.map((r) => {
+    const unsubscribeUrl = `${origin}/unsubscribe/${r.unsubscribe_token}`;
+    return {
+      to: r.email,
+      subject,
+      html: notificationHtml({
+        body,
+        link,
+        linkLabel: "Read it in the community",
+        unsubscribeUrl,
+      }),
+      text: notificationText({ body, link, unsubscribeUrl }),
+    };
+  });
+
+  const report = await sendBatch(envelopes);
+
+  /* Recorded whatever happened, including a total failure, because "did we
+     email about that?" is the question this table exists to answer. */
+  await supabase.from("notifications_sent").insert({
+    subject,
+    body,
+    post_id: input.postId,
+    sent_by: viewer.id,
+    recipients: report.sent,
+    failed: report.failed,
+  });
+
+  revalidatePath("/admin/notifications");
+
+  if (report.sent === 0) {
+    return {
+      ok: false,
+      error: `Nothing was sent. ${report.firstError ?? "The mail provider refused every message."}`,
+    };
+  }
+
+  return { ok: true, sent: report.sent, failed: report.failed };
+}
+
+/* A member turning notification email on or off from her account.
+ *
+ * The unsubscribe link in the mail is the path most people will use, but
+ * somebody who has decided in advance should not have to wait to be emailed
+ * before she can say no. Only ever her own row; role and category are pinned
+ * by policy regardless. */
+export async function setEmailOptIn(optIn: boolean): Promise<ActionResult> {
+  const viewer = await getViewer();
+  if (!viewer) return { ok: false, error: "Please sign in." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ email_opt_in: optIn })
+    .eq("id", viewer.id)
+    .select("id");
+
+  if (error) {
+    return {
+      ok: false,
+      error:
+        error.code === "42703"
+          ? "Email preferences are not set up yet. Run migration 006."
+          : "That did not save. Please try again.",
+    };
+  }
+  if (!data || data.length === 0) return { ok: false, error: "That did not save." };
+
+  revalidatePath("/account");
   return { ok: true };
 }
