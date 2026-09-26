@@ -135,7 +135,20 @@ grant execute on function public.admin_overview() to authenticated;
 -- when she joined was already there, but not how much she has written or when
 -- she was last here. Counts are per row over at most fifty rows, so a lateral
 -- count is cheaper than the join-and-group it replaces.
-create or replace function public.search_members(q text)
+--
+-- Dropped first, not replaced. "create or replace" refuses to change a
+-- function's return type, and adding columns to a RETURNS TABLE is exactly
+-- that: without the drop this fails with "cannot change return type of
+-- existing function" and takes the rest of the file down with it.
+--
+-- Dropping it is safe even while the old admin is live. Nothing else in the
+-- database depends on it, the gap lasts one statement inside this transaction,
+-- and the new signature only adds columns, so the members screen running
+-- against it right now keeps working: it reads the ones it knows by name and
+-- ignores the rest.
+drop function if exists public.search_members(text);
+
+create function public.search_members(q text)
 returns table (
   id uuid,
   display_name text,
