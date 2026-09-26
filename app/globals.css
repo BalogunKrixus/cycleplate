@@ -83,9 +83,28 @@ img{max-width:100%;display:block}
  * a faint shadow with nothing inside it, and a select read as a word with a
  * chevron rather than a control. A field is the one element that has to say "I
  * am a thing you operate", and it says it with a solid surface and an edge. */
-input[type="text"],input[type="email"],input[type="password"],input[type="search"],select,textarea{font-family:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line-strong);border-radius:14px;padding:13px 17px;box-shadow:none;outline:none;width:100%;transition:border-color .15s,box-shadow .15s}
-input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-halo)}
-textarea{resize:vertical;min-height:120px}
+/* Search and password are deliberately NOT in this selector.
+ *
+ * Adding them looked harmless and broke two fields at once: an
+ * input[type="..."] selector scores higher than a single class, so it beat the
+ * pl-11 that holds the magnifying glass off the search placeholder and the
+ * pr-12 that keeps the eye icon out of a typed password, and both icons landed
+ * on top of the text.
+ *
+ * Moving the rule into @layer base does not fix it, which is worth writing down
+ * because it looks like it should. Tailwind v3's @layer is not the native CSS
+ * cascade layer -- it relocates rules in source order and nothing more -- so
+ * specificity still decides, and an attribute selector still wins.
+ *
+ * What does fix it is not matching those two types here at all. Both fields
+ * carry .input, which lives in @layer components with the same values, and a
+ * single class ties with a utility and loses on source order. That is the whole
+ * reason .input exists as a class rather than as more element selectors. */
+@layer base {
+  input[type="text"],input[type="email"],select,textarea{font-family:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line-strong);border-radius:14px;padding:13px 17px;box-shadow:none;outline:none;width:100%;transition:border-color .15s,box-shadow .15s}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-halo)}
+  textarea{resize:vertical;min-height:120px}
+}
 .form-msg{border-radius:14px;padding:16px 20px;font-size:15px;margin-top:16px;display:none}
 .form-msg.ok{display:block;background:color-mix(in srgb,var(--follicular) 16%,var(--bg));color:var(--ink)}
 .form-msg.err{display:block;background:color-mix(in srgb,var(--menstrual) 14%,var(--bg));color:var(--ink)}
