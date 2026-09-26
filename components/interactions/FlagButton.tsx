@@ -47,7 +47,7 @@ export function FlagButton({
         onClick={() => (signedIn ? setOpen(true) : router.push("/auth/sign-in"))}
         aria-label="Flag this as inappropriate"
         title="Flag this as inappropriate"
-        className="text-faint transition hover:text-menstrual"
+        className="text-faint transition hover:text-menstrual-ink"
       >
         <svg
           width="15"

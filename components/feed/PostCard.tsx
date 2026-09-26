@@ -211,7 +211,7 @@ export function PostCard({
                         router.refresh();
                       })
                     }
-                    className="text-[13px] text-muted transition hover:text-menstrual"
+                    className="text-[13px] text-muted transition hover:text-menstrual-ink"
                   >
                     Remove
                   </button>
@@ -317,7 +317,7 @@ function ReplyItem({
                     router.refresh();
                   })
                 }
-                className="text-[12px] text-muted transition hover:text-menstrual"
+                className="text-[12px] text-muted transition hover:text-menstrual-ink"
               >
                 Remove
               </button>
