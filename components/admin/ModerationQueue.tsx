@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { resolveFlag, restoreContent, softDelete } from "@/lib/actions";
 import { Button, Card, timeAgo } from "@/components/ui/Primitives";
-import type { QueueItem } from "@/app/admin/page";
+import type { QueueItem } from "@/lib/adminTypes";
 
 export function ModerationQueue({ items }: { items: QueueItem[] }) {
   const [pending, startTransition] = useTransition();

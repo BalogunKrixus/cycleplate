@@ -91,6 +91,16 @@ export default async function CommunityPage({
       .from("profiles")
       .select("id", { count: "exact", head: true })
       .eq("role", "professional"),
+
+    /* Records that this member was here, which is the only way the admin can
+       answer "how many women are actually using this". It rides along in this
+       Promise.all rather than being awaited on its own, so it adds no wall
+       clock time, and the function itself writes at most once an hour per
+       person so the feed is not issuing a write on every reload. Failure is
+       ignored on purpose: a missing activity timestamp is not a reason to fail
+       to render the community, and on a database where migration 003 has not
+       been run yet this simply does nothing. */
+    supabase.rpc("touch_last_seen"),
   ]);
 
   const categories = (categoryRows ?? []) as Category[];

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { setMemberRole } from "@/lib/actions";
-import { Avatar, Button, Card } from "@/components/ui/Primitives";
+import { Avatar, Button, Card, timeAgo } from "@/components/ui/Primitives";
 import { PROFESSIONAL_CATEGORIES } from "@/lib/config";
 import type { MemberRow } from "@/app/admin/members/page";
 import type { Profile, ProfessionalCategory } from "@/lib/types";
@@ -28,7 +28,7 @@ export function MemberManager({
   const router = useRouter();
 
   return (
-    <div className="mt-8 flex flex-col gap-8">
+    <div className="flex flex-col gap-8">
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -153,12 +153,35 @@ function MemberCard({
       <div className="flex items-start gap-3">
         <Avatar displayName={member.display_name} size={40} />
         <div className="min-w-0 flex-1">
-          <p className="text-[15px] font-medium">{member.display_name}</p>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <p className="text-[15px] font-medium">{member.display_name}</p>
+            <span className="rounded-chip bg-bg2 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
+              {ROLE_LABELS[member.role]}
+            </span>
+            {isProfessional && member.professional_category ? (
+              <span className="text-[13px] text-faint">{categoryLabel(member)}</span>
+            ) : null}
+            {/* Only when there is something to see. A quiet member and a
+                reported one look identical without this. */}
+            {member.flag_count ? (
+              <span className="rounded-chip bg-menstrual/12 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-menstrual">
+                {member.flag_count} reported
+              </span>
+            ) : null}
+          </div>
+
           <p className="truncate text-[13px] text-muted">{member.email}</p>
-          <p className="mt-0.5 text-[13px] text-faint">
-            {ROLE_LABELS[member.role]}
-            {isProfessional && member.professional_category
-              ? ` · ${categoryLabel(member)}`
+
+          {/* Joined, last seen, and how much she has written. Undefined rather
+              than zero means migration 003 has not run, and the line is left
+              off entirely rather than claiming she has never posted. */}
+          <p className="mt-1 text-[13px] text-faint">
+            Joined {formatDate(member.created_at)}
+            {member.last_seen_at !== undefined
+              ? ` · ${member.last_seen_at ? `last seen ${timeAgo(member.last_seen_at)}` : "not seen since this was added"}`
+              : ""}
+            {member.post_count !== undefined
+              ? ` · ${member.post_count} post${member.post_count === 1 ? "" : "s"}, ${member.reply_count ?? 0} comment${member.reply_count === 1 ? "" : "s"}`
               : ""}
           </p>
         </div>
@@ -270,4 +293,15 @@ function categoryLabel(member: MemberRow) {
     PROFESSIONAL_CATEGORIES.find((c) => c.value === member.professional_category)
       ?.label ?? member.professional_category
   );
+}
+
+/* Short and unambiguous. toLocaleDateString with no locale renders differently
+   depending on where the server thinks it is, which is how a join date ends up
+   reading as a different month to the person who typed it. */
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
