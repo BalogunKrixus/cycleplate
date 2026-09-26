@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { createClient as createAuthClient } from "@supabase/supabase-js";
 import { createClient, getViewer } from "@/lib/supabase/server";
 import { isModerator, isSuperAdmin } from "@/lib/roles";
+import { RESERVED_ARTICLE_SLUGS, slugify } from "@/lib/config";
 import { supabaseEnv } from "@/lib/supabase/env";
 import { POST_MAX_LENGTH, REPLY_MAX_LENGTH } from "@/lib/config";
 import { validateDisplayName } from "@/lib/displayName";
@@ -408,5 +409,123 @@ export async function setMemberRole(
   if (error) return { ok: false, error: "That did not save." };
 
   revalidatePath("/admin/members");
+  return { ok: true };
+}
+
+/* ---------------------------------------------------------------- insights */
+
+export interface ArticleInput {
+  id?: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  body: string;
+  featured_image: string;
+  category: string;
+  tags: string;
+  seo_title: string;
+  seo_description: string;
+  status: "draft" | "published";
+}
+
+export async function saveArticle(
+  input: ArticleInput,
+): Promise<ActionResult & { id?: string; slug?: string }> {
+  const viewer = await getViewer();
+  if (!viewer || !isModerator(viewer)) {
+    return { ok: false, error: "Not allowed." };
+  }
+
+  const title = input.title.trim();
+  if (!title) return { ok: false, error: "Give it a title." };
+
+  const slug = slugify(input.slug.trim() || title);
+  if (!slug) return { ok: false, error: "That title makes an empty address." };
+
+  /* The four original articles are files, and a static route wins over a
+     dynamic one. A row with one of their slugs would save happily and then be
+     unreachable for ever, which is worse than being told no. */
+  if ((RESERVED_ARTICLE_SLUGS as readonly string[]).includes(slug)) {
+    return {
+      ok: false,
+      error: `"${slug}" is one of the original articles. Choose another address.`,
+    };
+  }
+
+  if (input.status === "published" && !input.body.trim()) {
+    return { ok: false, error: "There is nothing to publish yet." };
+  }
+
+  const supabase = await createClient();
+
+  const row = {
+    slug,
+    title,
+    excerpt: input.excerpt.trim() || null,
+    body: input.body,
+    featured_image: input.featured_image.trim() || null,
+    category: input.category.trim() || null,
+    tags: input.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean),
+    seo_title: input.seo_title.trim() || null,
+    seo_description: input.seo_description.trim() || null,
+    status: input.status,
+  };
+
+  const { data, error } = input.id
+    ? await supabase
+        .from("articles")
+        .update(row)
+        .eq("id", input.id)
+        .select("id, slug")
+        .maybeSingle()
+    : await supabase
+        .from("articles")
+        .insert({ ...row, author_id: viewer.id })
+        .select("id, slug")
+        .maybeSingle();
+
+  if (error) {
+    /* 23505 is the unique index on slug. Everything else is a surprise and is
+       worth saying out loud rather than flattening into "that did not save". */
+    if (error.code === "23505") {
+      return { ok: false, error: `Something already lives at /insights/${slug}.` };
+    }
+    console.error("saveArticle failed:", error.code, error.message);
+    return { ok: false, error: "That did not save. Please try again." };
+  }
+
+  /* Selecting the row back is the check, not a convenience: row level security
+     refuses without raising, so no row means the write was declined. */
+  if (!data) return { ok: false, error: "Not allowed." };
+
+  revalidatePath("/insights");
+  revalidatePath(`/insights/${slug}`);
+  revalidatePath("/admin/insights");
+  return { ok: true, id: data.id as string, slug: data.slug as string };
+}
+
+export async function deleteArticle(id: string): Promise<ActionResult> {
+  const viewer = await getViewer();
+  if (!viewer || !isModerator(viewer)) {
+    return { ok: false, error: "Not allowed." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("articles")
+    .delete()
+    .eq("id", id)
+    .select("slug")
+    .maybeSingle();
+
+  if (error) return { ok: false, error: "That did not delete." };
+  if (!data) return { ok: false, error: "Not allowed." };
+
+  revalidatePath("/insights");
+  revalidatePath(`/insights/${data.slug as string}`);
+  revalidatePath("/admin/insights");
   return { ok: true };
 }
