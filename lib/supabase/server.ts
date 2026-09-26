@@ -128,14 +128,6 @@ export async function requireAdmin(): Promise<Profile | null> {
     : null;
 }
 
-/* Granting somebody else a role is a different question from moderating, and
-   only super admins get to answer it. Enforced again by row level security, so
-   this decides what to render rather than what is allowed. */
-export async function requireSuperAdmin(): Promise<Profile | null> {
-  const viewer = await getViewer();
-  return viewer?.role === "super_admin" ? viewer : null;
-}
-
 /* Runs the work, or gives up. Whichever finishes first wins; the loser is left
    to finish on its own and be ignored, because there is nothing useful to do
    with a Supabase answer that arrives after the page has been rendered. */

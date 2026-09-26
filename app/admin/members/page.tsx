@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient, requireAdmin } from "@/lib/supabase/server";
+import { isSuperAdmin } from "@/lib/roles";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { MemberManager } from "@/components/admin/MemberManager";
 import type { Profile, UserRole } from "@/lib/types";
@@ -32,7 +33,7 @@ export default async function MembersPage({
   const admin = await requireAdmin();
   if (!admin) redirect("/admin/login");
 
-  const canGrantRoles = admin.role === "super_admin";
+  const canGrantRoles = isSuperAdmin(admin);
 
   const params = await searchParams;
   const query = params.q?.trim() ?? "";

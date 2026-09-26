@@ -164,7 +164,7 @@ function MemberCard({
             {/* Only when there is something to see. A quiet member and a
                 reported one look identical without this. */}
             {member.flag_count ? (
-              <span className="rounded-chip bg-menstrual/12 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-menstrual">
+              <span className="rounded-chip bg-menstrual/12 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-menstrual-ink">
                 {member.flag_count} reported
               </span>
             ) : null}
@@ -197,10 +197,17 @@ function MemberCard({
           <div>
             <div className="flex flex-wrap items-end gap-2">
               <div className="min-w-[180px] flex-1">
-                <label className="mb-1.5 block text-[13px] font-medium">
+                <label
+                  htmlFor={`category-${member.id}`}
+                  className="mb-1.5 block text-[13px] font-medium"
+                >
                   Posts and replies as
                 </label>
+                {/* The label was here all along but was not tied to the control,
+                    so a screen reader announced an unnamed combo box. One id per
+                    member, because this card repeats down the page. */}
                 <select
+                  id={`category-${member.id}`}
                   value={category}
                   onChange={(e) =>
                     setCategory(e.target.value as ProfessionalCategory | "")
@@ -239,6 +246,7 @@ function MemberCard({
               <input
                 value={other}
                 onChange={(e) => setOther(e.target.value)}
+                aria-label="Their professional title"
                 placeholder="Their title"
                 maxLength={40}
                 className="input mt-2"

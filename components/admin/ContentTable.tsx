@@ -73,12 +73,12 @@ function ContentRow({ kind, row }: { kind: "post" | "reply"; row: Post | Reply }
           </span>
         ) : null}
         {post?.is_pinned ? (
-          <span className="rounded-chip bg-ovulatory/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-ovulatory">
+          <span className="rounded-chip bg-ovulatory/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-ovulatory-ink">
             Pinned
           </span>
         ) : null}
         {row.is_deleted ? (
-          <span className="rounded-chip bg-menstrual/12 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-menstrual">
+          <span className="rounded-chip bg-menstrual/12 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-menstrual-ink">
             Removed
           </span>
         ) : null}

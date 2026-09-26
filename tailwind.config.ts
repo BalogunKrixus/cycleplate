@@ -45,7 +45,7 @@ const config: Config = {
         faint: "var(--ink2)",
 
         accent: "var(--accent)",
-        "accent-ink": "var(--accent-ink)",
+        "accent-ink": "var(--on-accent)",
 
         /* Cycle phases. Shared by the marketing charts and the community
            category chips, which is why they belong here and not in either. */
@@ -54,9 +54,24 @@ const config: Config = {
         ovulatory: "var(--ovulatory)",
         luteal: "var(--luteal)",
 
+        /* Text-safe versions of the four phase colours, for the places they
+           are read rather than looked at. The vivid values above stay for
+           fills, dots and charts; used as *text* on a pale tint of themselves
+           they bottomed out at 2.01:1, which is the gold chip on a cream card
+           and effectively invisible. */
+        "menstrual-ink": "var(--menstrual-ink)",
+        "follicular-ink": "var(--follicular-ink)",
+        "ovulatory-ink": "var(--ovulatory-ink)",
+        "luteal-ink": "var(--luteal-ink)",
+
         /* The professional badge borrows the follicular green rather than
-           introducing a colour that means nothing anywhere else. */
-        expert: "var(--follicular)",
+           introducing a colour that means nothing anywhere else. It needs its
+           own pair because it is the one place the green carries writing: in
+           the light theme a dark green with white on it, in the dark theme a
+           pale green with dark on it. Using one green for both put white text
+           on pale green at 1.72:1. */
+        expert: "var(--expert)",
+        "expert-ink": "var(--expert-ink)",
       },
       fontFamily: {
         serif: ["Fraunces", "Georgia", "serif"],

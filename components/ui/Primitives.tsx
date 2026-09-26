@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { avatarColor, initialOf } from "@/lib/displayName";
-import { ADMIN_BADGE_LABEL, categoryColor } from "@/lib/config";
+import { ADMIN_BADGE_LABEL, categoryColor, categoryInk } from "@/lib/config";
 import type { ProfessionalCategory, UserRole } from "@/lib/types";
 import { PROFESSIONAL_CATEGORIES } from "@/lib/config";
 
@@ -42,11 +42,13 @@ export function Card({
 }
 
 export function CategoryChip({ slug, label }: { slug: string; label: string }) {
-  const color = categoryColor(slug);
+  /* Two colours, not one. The fill is the vivid phase colour at 10%; the label
+     is the darker variant of the same hue, because writing the label in the
+     fill colour is what put the gold chip at 2.01:1. */
   return (
     <span
       className="inline-flex items-center rounded-chip px-3 py-1 text-[12px] font-medium"
-      style={{ color, background: `${color}1A` }}
+      style={{ color: categoryInk(slug), background: `${categoryColor(slug)}1A` }}
     >
       {label}
     </span>
@@ -84,7 +86,7 @@ export function AuthorBadge({
 
   if (role === "professional") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-chip bg-expert px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
+      <span className="inline-flex items-center gap-1.5 rounded-chip bg-expert px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-expert-ink">
         {/* "Expert answered" reads as nonsense above a question, and this badge
             now appears on posts as well as replies. The role is the honest
             label in both places. */}

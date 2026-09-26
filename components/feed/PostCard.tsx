@@ -104,7 +104,7 @@ export function PostCard({
       }`}
     >
       {post.is_pinned ? (
-        <p className="mb-3 flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide text-ovulatory">
+        <p className="mb-3 flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide text-ovulatory-ink">
           <svg
             width="13"
             height="13"

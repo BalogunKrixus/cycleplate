@@ -97,13 +97,18 @@ export function Mark({
 }
 
 /* Text rather than an SVG path, so it renders in the live Fraunces and stays
-   selectable and readable to a screen reader. "Cycle" follows the theme; the
-   dark theme override lives in globals.css. */
+   selectable and readable to a screen reader.
+ *
+ * Both halves take theme variables rather than the brand literals above. On the
+ * dark theme the literals were #3A2418 on #1F1712 and #C2410C on #1F1712 --
+ * near-black on near-black, and 3.4:1 -- so the wordmark was the least legible
+ * thing on the page in the one place a visitor looks first. The mark keeps the
+ * literals because SVG presentation attributes cannot resolve var(). */
 export function Wordmark({ size = 40 }: { size?: number }) {
   return (
     <span className="cp-wordmark" style={{ fontSize: `${size}px` }}>
-      <span style={{ color: INK }}>Cycle</span>
-      <span style={{ color: CLAY }}>Plate</span>
+      <span style={{ color: "var(--ink)" }}>Cycle</span>
+      <span style={{ color: "var(--accent)" }}>Plate</span>
     </span>
   );
 }
