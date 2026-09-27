@@ -78,6 +78,9 @@ export default async function CommunityPage({
     { count: memberCount },
     { count: weekCount },
     { count: professionalCount },
+    likeResult,
+    searchReplyResult,
+    focusResult,
   ] = await Promise.all([
     supabase
       .from("categories")
@@ -96,14 +99,48 @@ export default async function CommunityPage({
       .select("id", { count: "exact", head: true })
       .eq("role", "professional"),
 
+    /* The viewer's likes. One query for the whole page rather than one per
+       card, and it asks for every like this member has ever left, so it needs
+       nothing from the feed and has no reason to wait for it. */
+    viewer
+      ? supabase
+          .from("likes")
+          .select("target_type, target_id")
+          .eq("user_id", viewer.id)
+      : null,
+
+    /* A search has to look at replies too, otherwise a question whose answer
+       mentions the term simply vanishes from the results. Independent of the
+       posts query, so it goes alongside it. */
+    query
+      ? supabase
+          .from("replies")
+          .select("*")
+          .eq("is_deleted", false)
+          .ilike("body", `%${query}%`)
+          .limit(FEED_PAGE_SIZE)
+      : null,
+
+    /* A post linked from a notification email may be older than the page of
+       posts fetched above. Asked for up front rather than after discovering it
+       is missing: usually it is already in hand and this answer is thrown away,
+       which costs nothing, where a second trip to Ireland costs the wait. */
+    focusPost
+      ? supabase
+          .from("posts")
+          .select("*")
+          .eq("id", focusPost)
+          .eq("is_deleted", false)
+          .maybeSingle()
+      : null,
+
     /* Records that this member was here, which is the only way the admin can
-       answer "how many women are actually using this". It rides along in this
-       Promise.all rather than being awaited on its own, so it adds no wall
-       clock time, and the function itself writes at most once an hour per
-       person so the feed is not issuing a write on every reload. Failure is
-       ignored on purpose: a missing activity timestamp is not a reason to fail
-       to render the community, and on a database where migration 003 has not
-       been run yet this simply does nothing. */
+       answer "how many women are actually using this". Last in the batch and
+       deliberately never read: it adds no wall clock time, the function writes
+       at most once an hour per person so the feed is not issuing a write on
+       every reload, and failure is ignored on purpose, because a missing
+       activity timestamp is not a reason to fail to render the community. On a
+       database where migration 003 has not been run yet it does nothing. */
     supabase.rpc("touch_last_seen"),
   ]);
 
@@ -116,19 +153,15 @@ export default async function CommunityPage({
   let repliesByPost = new Map<string, Reply[]>();
 
   if (query) {
-    const { data: replyRows } = await supabase
-      .from("replies")
-      .select("*")
-      .eq("is_deleted", false)
-      .ilike("body", `%${query}%`)
-      .limit(FEED_PAGE_SIZE);
-
-    const matchedReplies = (replyRows ?? []) as Reply[];
+    const matchedReplies = (searchReplyResult?.data ?? []) as Reply[];
     const known = new Set(posts.map((p) => p.id));
     const missing = [
       ...new Set(matchedReplies.map((r) => r.post_id).filter((id) => !known.has(id))),
     ];
 
+    /* This one has to wait, and only this one: which parents are missing is not
+       a question that can be asked until the replies and the feed are both in
+       hand. Searching is the one path that still costs a second round trip. */
     if (missing.length) {
       const { data: parents } = await supabase
         .from("posts")
@@ -151,31 +184,19 @@ export default async function CommunityPage({
     });
   }
 
-  /* One query for the viewer's likes rather than one per card. */
-  let likedPosts = new Set<string>();
-  let likedReplies = new Set<string>();
+  /* Which hearts are already filled in, from the batch above. */
+  const likedPosts = new Set<string>();
+  const likedReplies = new Set<string>();
 
-  if (viewer && posts.length) {
-    const { data: likeRows } = await supabase
-      .from("likes")
-      .select("target_type, target_id")
-      .eq("user_id", viewer.id);
-
-    for (const like of likeRows ?? []) {
-      if (like.target_type === "post") likedPosts.add(like.target_id as string);
-      else likedReplies.add(like.target_id as string);
-    }
+  for (const like of likeResult?.data ?? []) {
+    if (like.target_type === "post") likedPosts.add(like.target_id as string);
+    else likedReplies.add(like.target_id as string);
   }
 
-  /* The linked post may be older than the page of posts fetched above, so it
-     is looked up separately when it is not already in hand. */
+  /* The linked post, if it was not already on the page. Fetched in the batch
+     above, so this is only the decision about whether it is needed. */
   if (focusPost && !posts.some((p) => p.id === focusPost)) {
-    const { data: one } = await supabase
-      .from("posts")
-      .select("*")
-      .eq("id", focusPost)
-      .eq("is_deleted", false)
-      .maybeSingle();
+    const one = focusResult?.data;
     if (one) posts = [one as Post, ...posts];
   }
 
