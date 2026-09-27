@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient, requireAdmin } from "@/lib/supabase/server";
 import { isSuperAdmin } from "@/lib/roles";
+import { isMissingFunction } from "@/lib/pgErrors";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { MemberManager } from "@/components/admin/MemberManager";
 import type { Profile, UserRole } from "@/lib/types";
@@ -44,12 +45,28 @@ export default async function MembersPage({
      never readable by the feed. */
   const { data: results } = await supabase.rpc("search_members", { q: query });
 
-  /* Roles are public, so the standing list of professionals needs no such care. */
-  const { data: professionals } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("role", "professional")
-    .order("display_name");
+  /* Professionals get their own tab with the same detail as everyone else,
+     addresses included, so this goes through a security definer function too
+     rather than reading profiles directly. */
+  const { data: pros, error: prosError } = await supabase.rpc("list_professionals");
+
+  /* Before migration 007 that function does not exist. Falling back to the
+     table keeps the tab working -- without addresses, which profiles does not
+     hold -- rather than emptying it and implying there are no professionals. */
+  let professionals = (pros ?? []) as MemberRow[];
+  let needsMigration007 = false;
+  if (isMissingFunction(prosError)) {
+    needsMigration007 = true;
+    const { data: fallback } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("role", "professional")
+      .order("display_name");
+    professionals = ((fallback ?? []) as Profile[]).map((pro) => ({
+      ...pro,
+      email: "",
+    })) as MemberRow[];
+  }
 
   return (
     <AdminShell
@@ -65,7 +82,8 @@ export default async function MembersPage({
       <MemberManager
         query={query}
         results={(results ?? []) as MemberRow[]}
-        professionals={(professionals ?? []) as Profile[]}
+        professionals={professionals}
+        needsMigration007={needsMigration007}
         currentAdminId={admin.id}
         canGrantRoles={canGrantRoles}
       />
