@@ -134,15 +134,17 @@ export function MemberManager({
           {needsMigration007 ? (
             <div className="mt-4 rounded-card bg-surface p-5 shadow-card">
               <p className="text-[14px]">
-                Addresses are missing from this tab.
+                Email addresses are not showing on this tab yet.
               </p>
               <p className="mt-1 max-w-[62ch] text-[13px] leading-relaxed text-muted">
-                Run{" "}
+                They live in a part of the database the site cannot read
+                directly, and the function that reads them safely arrives with{" "}
                 <code className="text-ink">
                   supabase/migrations/007-others-category-and-professional-list.sql
-                </code>{" "}
-                in the Supabase SQL editor and reload. Everything else on this
-                tab works without it.
+                </code>
+                . Run it in the Supabase SQL editor and reload. Everything else
+                on this tab, and every address on the Members tab, works without
+                it.
               </p>
             </div>
           ) : null}
@@ -253,15 +255,26 @@ function PersonRow({
             {showIdentity ? (
               <span className="text-[15px] font-medium">{person.display_name}</span>
             ) : null}
-            <span
-              className={
-                showIdentity
-                  ? "truncate text-[13px] text-muted"
-                  : "truncate text-[15px] font-medium"
-              }
-            >
-              {person.email || "address unavailable"}
-            </span>
+            {/* No placeholder where an address would go. On this tab the name
+                is already the identifier, so an absent address is better said
+                once in the note above than repeated down every row. On the
+                members tab, where the address is the identifier, the handle
+                stands in rather than leaving the row unidentifiable. */}
+            {person.email ? (
+              <span
+                className={
+                  showIdentity
+                    ? "truncate text-[13px] text-muted"
+                    : "truncate text-[15px] font-medium"
+                }
+              >
+                {person.email}
+              </span>
+            ) : !showIdentity ? (
+              <span className="truncate text-[15px] font-medium">
+                {person.display_name}
+              </span>
+            ) : null}
             {/* Member is the default and says nothing worth the ink. A role
                 that changes what somebody can do is worth a chip. */}
             {person.role !== "member" ? (
