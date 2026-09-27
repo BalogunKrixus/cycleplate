@@ -307,6 +307,10 @@ function Preview({
   category: string;
   body: string;
 }) {
+  /* Keyed on the address, so correcting a typo clears the warning rather than
+     leaving it stuck on the first thing that failed. */
+  const [brokenImage, setBrokenImage] = useState("");
+
   return (
     <div className="rounded-card bg-surface p-6 shadow-card sm:p-8">
       {category ? <p className="eyebrow">{category}</p> : null}
@@ -315,11 +319,22 @@ function Preview({
       </h1>
       {excerpt ? <p className="lede mt-3">{excerpt}</p> : null}
 
-      {image ? (
+      {image && brokenImage === image ? (
+        /* A broken image in a preview is a silent failure: a placeholder icon
+           in a large empty box reads as "still loading" rather than "that
+           address is wrong", and the article gets published with it. */
+        <p className="mt-6 rounded-card border border-line px-4 py-3 text-[14px] text-muted">
+          That featured image could not be loaded. Check the address — it needs
+          to be a file in /public, like{" "}
+          <code className="text-ink">/photos/cramps-sofa.jpg</code>, or a full
+          https:// link that points straight at an image.
+        </p>
+      ) : image ? (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={image}
           alt=""
+          onError={() => setBrokenImage(image)}
           className="mt-6 aspect-[16/9] w-full rounded-card object-cover"
         />
       ) : null}

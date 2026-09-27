@@ -108,14 +108,37 @@ export default async function ArticlePage({
         <section className="band" style={{ paddingTop: 0, paddingBottom: 32 }}>
           <div className="wrap" style={{ maxWidth: 760 }}>
             <div className="photo" style={{ aspectRatio: "16/9" }}>
-              <Image
-                src={article.featured_image}
-                alt=""
-                fill
-                sizes="(max-width: 800px) 100vw, 760px"
-                priority
-                style={{ objectFit: "cover" }}
-              />
+              {/* next/image refuses a hostname that is not in next.config, and
+                  it refuses it by throwing while the page renders -- so an
+                  article published with an image from anywhere else on the web
+                  would not look wrong, it would return a 500. The alternative,
+                  opening remotePatterns to every host, turns the image
+                  optimiser into a resizing proxy for the whole internet at our
+                  expense. So a local file is optimised as before, and an
+                  address elsewhere is served as it is. */}
+              {article.featured_image.startsWith("/") ? (
+                <Image
+                  src={article.featured_image}
+                  alt=""
+                  fill
+                  sizes="(max-width: 800px) 100vw, 760px"
+                  priority
+                  style={{ objectFit: "cover" }}
+                />
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={article.featured_image}
+                  alt=""
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              )}
             </div>
           </div>
         </section>
