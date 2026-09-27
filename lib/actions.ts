@@ -12,6 +12,7 @@ import { supabaseEnv } from "@/lib/supabase/env";
 import { POST_MAX_LENGTH, REPLY_MAX_LENGTH } from "@/lib/config";
 import { validateDisplayName } from "@/lib/displayName";
 import type { ProfessionalCategory } from "@/lib/types";
+import { isMissingColumn, isMissingFunction, isMissingTable } from "@/lib/pgErrors";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -495,6 +496,16 @@ export async function saveArticle(
     if (error.code === "23505") {
       return { ok: false, error: `Something already lives at /insights/${slug}.` };
     }
+    /* The table is not there at all, so this is not a failed save, it is a
+       migration that has not been run. Worth saying, because the alternative
+       is somebody losing a draft to "please try again". */
+    if (isMissingTable(error)) {
+      return {
+        ok: false,
+        error:
+          "Publishing is not set up yet. Run supabase/migrations/005-insights-articles.sql in the Supabase SQL editor, then try again.",
+      };
+    }
     console.error("saveArticle failed:", error.code, error.message);
     return { ok: false, error: "That did not save. Please try again." };
   }
@@ -555,7 +566,7 @@ export async function countRecipients(): Promise<
     return {
       ok: false,
       error:
-        error.code === "42883"
+        isMissingFunction(error)
           ? "Run migration 006 first: notifications are not set up yet."
           : "Could not read the member list.",
     };
@@ -667,7 +678,7 @@ export async function setEmailOptIn(optIn: boolean): Promise<ActionResult> {
     return {
       ok: false,
       error:
-        error.code === "42703"
+        isMissingColumn(error)
           ? "Email preferences are not set up yet. Run migration 006."
           : "That did not save. Please try again.",
     };

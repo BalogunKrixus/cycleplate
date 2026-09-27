@@ -5,6 +5,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { createClient, requireAdmin } from "@/lib/supabase/server";
 import { timeAgo } from "@/components/ui/Primitives";
 import type { Article } from "@/lib/types";
+import { isMissingTable } from "@/lib/pgErrors";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Insights" };
@@ -21,9 +22,10 @@ export default async function AdminInsightsPage() {
     .limit(100);
 
   const articles = (data ?? []) as Article[];
-  /* 42P01 is "relation does not exist": migration 005 has not been run. Saying
-     so beats an empty list that reads as "you have written nothing". */
-  const missingTable = error?.code === "42P01";
+  /* Migration 005 has not been run. Saying so beats an empty list that reads as
+     "you have written nothing" -- which is what this page actually did, because
+     it only checked the Postgres code and Supabase answers with PostgREST's. */
+  const missingTable = isMissingTable(error);
 
   return (
     <AdminShell
