@@ -67,7 +67,7 @@ export function AccountSettings({ viewer }: { viewer: Profile }) {
     setSavingEmail(true);
     const next = !emailOptIn;
     /* Moved first so the switch answers the tap, and put back if the write is
-       refused. A preference toggle that waits on a round trip to Ireland feels
+       refused. A preference toggle that waits on a round trip to the database feels
        broken long before it feels careful. */
     setEmailOptIn(next);
     const result = await setEmailOptInAction(next);

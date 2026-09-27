@@ -62,16 +62,20 @@ export default async function CommunityPage({
 
   /* The chips and the posts have nothing to say to each other, so they are
      fetched together rather than one after the other. Every await here is a
-     round trip to a database in another country, and they were queueing. */
+     round trip, and they were queueing. */
   /* A week ago, for the activity count. */
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
   /* The three counts are head requests: they ask Postgres for a number and
      carry no rows back. They are in this Promise.all rather than after it
      because none of them depends on the feed, so in wall clock time they cost
-     nothing beyond the slowest query already being made -- which matters, since
-     the database is in Ireland and every sequential await here is another
-     round trip across an ocean. */
+     nothing beyond the slowest query already being made.
+
+     These trips are short now -- the functions run in Dublin beside the
+     database, which they did not when this batching was written -- and that is
+     a reason to keep it rather than to undo it. A round trip costing a
+     millisecond instead of seventy-five is still a round trip, and six of them
+     in a row is still six times the wait of six made at once. */
   const [
     { data: categoryRows },
     { data: postRows },
@@ -124,7 +128,7 @@ export default async function CommunityPage({
     /* A post linked from a notification email may be older than the page of
        posts fetched above. Asked for up front rather than after discovering it
        is missing: usually it is already in hand and this answer is thrown away,
-       which costs nothing, where a second trip to Ireland costs the wait. */
+       which costs nothing, where a second sequential trip costs the wait. */
     focusPost
       ? supabase
           .from("posts")

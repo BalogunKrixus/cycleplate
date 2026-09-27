@@ -18,7 +18,7 @@ export const metadata = { title: "Overview" };
  * about; a question nobody has answered tells them where to spend the evening.
  *
  * It is one round trip. admin_overview() computes the lot in Postgres, because
- * the database is in Ireland and a dozen separate counts would be a dozen
+ * a dozen separate counts would be a dozen
  * crossings of the Atlantic on a page somebody opens every morning.
  */
 export default async function AdminOverviewPage() {
